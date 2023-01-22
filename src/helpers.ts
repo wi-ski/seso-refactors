@@ -23,31 +23,41 @@ export type TDomainShapeConfig = {
       "index.ts": TSourceFileConfiguratorFn;
     };
   };
-  "types.ts": TSourceFileConfiguratorFn;
 };
 type TPathsToFileContentObj = {
   content: TSourceFileConfiguratorFn;
   path: string;
 };
 type TPathsToFileContent = TPathsToFileContentObj[];
-type TRefactorTypesToDestinationFilesPath = Record<TRefactorTypes, string>;
 export type TExtensionParamsBlob = {
-  destinationDomainChain: string;
-  destinationFilePath: string;
-  domainFilePathPart: string;
-  domainFolderPart: string;
-  domainFolderPath: string;
-  domainLevelFirst: string;
-  domainLevelFirstTypeFilePath: string;
-  domainLevelSecond: string;
-  domainLevelSecondTypeFilePath: string | null;
+  _proposedTypeReferenceChain: string;
+  domainNameAlpha: string;
+  domainNameAlphaBarrelExportRootDirPath: string;
+  domainNameAlphaBarrelExportRootFilePath: string;
+  domainNameAlphaBarrelFullExportStatement: string;
+  domainNameBeta: string;
+  domainNameBetaBarrelExportRelativeImportPath: string;
+  domainNameBetaBarrelExportRootDirPath: string;
+  domainNameBetaBarrelExportRootFilePath: string;
+  domainNameBetaBarrelFullExportStatement: string;
+  domainNameGamma: string | null;
+  // Look at me. Im nullable.
+  domainNameGammaBarrelExportRootDirPath: string | null;
+  // Look at me. Im nullable.
+  domainNameGammaBarrelExportRootFilePath: string | null;
+  domainNameGammaBarrelFullExportStatement: string;
+  // Look at me. Im nullable.
+  domainNameZeta: string;
+  domainNameZetaBarrelExportRelativeImportPath: string;
+  domainNameZetaBarrelFullExportStatement: string;
+  domainNameZetaRootDirPath: string;
+  domainNameZeta_SUPER_ROOT_BarrelExportDirPath: string;
+  domainNameZeta_SUPER_ROOT_BarrelExportRootFilePath: string;
+  domainNameZeta_SUPER_ROOT_TypeDefinitionFilePath: string;
   domainShapeConfig: TDomainShapeConfig;
   pathsToFileContent: TPathsToFileContent;
-  refactorTypesToDestinationFilesPath: TRefactorTypesToDestinationFilesPath;
-  rootDomainFilePathPath: string;
-  rootLevelTypeFilePath: string;
+  proposedTypeChainReferenceShort: string;
   topLevelNamespace: string;
-  tsesoPrefix: string;
 };
 const TSesoString = "TSeso";
 const topLevelNamespace = "TSeso.TD";
@@ -64,66 +74,250 @@ const typeRefactorTypes = {
 type TRefactorType = typeof typeRefactorTypes;
 type TRefactorTypes = TRefactorType[keyof TRefactorType];
 type TBuildArgsParams = {
-  destinationDomainChain: string;
+  proposedTypeReferenceChain: string;
   pwd: string;
 };
-const tsesoPrefix = "TSeso.TD.";
-const domainFolderPart = "ddd";
+const domainNameAlpha = "ddd";
 
 export const buildArgsFromDomainTypePath = ({
-  destinationDomainChain,
+  proposedTypeReferenceChain: _proposedTypeReferenceChain,
   pwd,
 }: TBuildArgsParams): TExtensionParamsBlob => {
-  const defaultDomainBarrelExportFileContent = (f: SourceFile) => {
-    // const emptyContents = [
-    //   `export * as Application from "./application/types";`,
-    //   `export * as Domain from "./domain/types";`,
-    //   `export * as Infrastructure from "./infrastructure/types";`,
-    // ];
-    const existingDeclarations = f.getExportedDeclarations();
-    f.getStatements().forEach((s) => {
-      console.log({ file: f.getFilePath(), statement: s.getText() });
-    });
-    switch (activeRefactorType) {
-      case typeRefactorTypes.APPLICATION_DTO:
-        if (!existingDeclarations.get("Application")) {
-          f.addExportDeclaration({
-            isTypeOnly: false,
-            moduleSpecifier: "./application/types",
-            namespaceExport: "Application",
-          });
-        }
-        break;
-      case typeRefactorTypes.DOMAIN_ENTITY:
-      case typeRefactorTypes.DOMAIN_VALUE_OBJECT:
-        if (!existingDeclarations.get("Domain")) {
-          f.addExportDeclaration({
-            isTypeOnly: false,
-            moduleSpecifier: "./domain/types",
-            namespaceExport: "Domain",
-          });
-        }
-        break;
-      case typeRefactorTypes.INFRASTRCTURE_SCHEMA:
-        if (!existingDeclarations.get("Infrastructure")) {
-          f.addExportDeclaration({
-            isTypeOnly: false,
-            moduleSpecifier: "./infrastructure/types",
-            namespaceExport: "Infrastructure",
-          });
-        }
-        break;
-      default:
-        throw new Error("Bad refactor type");
+  const activeRefactorType: TRefactorTypes = (() => {
+    if (_proposedTypeReferenceChain.includes(applicationDTO)) {
+      return typeRefactorTypes.APPLICATION_DTO;
     }
-  };
-  const defaultInfrastructureTypeFileContent = (f: SourceFile) => {
+    if (_proposedTypeReferenceChain.includes(domainValueObject)) {
+      return typeRefactorTypes.DOMAIN_VALUE_OBJECT;
+    }
+    if (_proposedTypeReferenceChain.includes(domainEntity)) {
+      return typeRefactorTypes.DOMAIN_ENTITY;
+    }
+    if (_proposedTypeReferenceChain.includes(infraSchema)) {
+      return typeRefactorTypes.INFRASTRCTURE_SCHEMA;
+    }
+    throw new Error(
+      `Bad _proposedTypeReferenceChain: ${_proposedTypeReferenceChain}`
+    );
+  })();
+  const proposedTypeChainReferenceShort = String(
+    _proposedTypeReferenceChain
+      .split(topLevelNamespace)
+      .join(".")
+      .split(".")
+      .filter(Boolean)
+      .join(".")
+  );
+  const domainNameAlphaBarrelExportRootDirPath = path.join(
+    pwd,
+    domainNameAlpha
+  );
+  const domainNameBeta = (() => {
+    let parts = null;
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        parts = String(proposedTypeChainReferenceShort.split("Application")[0]);
+        break;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY:
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        parts = String(proposedTypeChainReferenceShort.split("Domain")[0]);
+        break;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        parts = String(
+          proposedTypeChainReferenceShort.split("Infrastructure")[0]
+        );
+        break;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+    return String(parts.split(".").filter(Boolean).shift());
+  })();
+  const domainNameGamma = (() => {
+    let parts = null;
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        parts = String(proposedTypeChainReferenceShort.split("Application")[0]);
+        break;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY:
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        parts = String(proposedTypeChainReferenceShort.split("Domain")[0]);
+        break;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        parts = String(
+          proposedTypeChainReferenceShort.split("Infrastructure")[0]
+        );
+        break;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+    const p = parts.split(".").filter(Boolean);
+    return p.length > 1 ? String(parts.split(".").filter(Boolean).pop()) : null;
+  })();
+
+  const domainNameAlphaBarrelExportRootFilePath = `${domainNameAlphaBarrelExportRootDirPath}/types.ts`;
+
+  const domainNameAlphaBarrelFullExportStatement = `export * as ${domainNameBeta} from "./${domainNameBeta}/types";`;
+  const domainNameBetaBarrelExportRootDirPath = `${domainNameAlphaBarrelExportRootDirPath}/${domainNameBeta}`;
+  const domainNameBetaBarrelExportRootFilePath = `${domainNameAlphaBarrelExportRootDirPath}/${domainNameBeta}/types.ts`;
+  const domainNameBetaBarrelExportRelativeImportPath = (() => {
+    if (domainNameGamma) {
+      return `./${domainNameGamma}/types;`;
+    }
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        return `./application/types`;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY:
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        return `./domain/types`;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        return `./infrastructure/types`;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+  })();
+
+  const domainNameBetaBarrelFullExportStatement = (() => {
+    if (domainNameGamma) {
+      return `export * as ${domainNameGamma} from "./${domainNameGamma}/types";`;
+    }
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        return `export * as Application from "${domainNameBetaBarrelExportRelativeImportPath}";`;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY:
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        return `export * as Domain from "${domainNameBetaBarrelExportRelativeImportPath}";`;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        return `export * as Infrastructure from "${domainNameBetaBarrelExportRelativeImportPath}";`;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+  })();
+
+  const domainNameGammaBarrelExportRootDirPath = domainNameGamma
+    ? `${domainNameBetaBarrelExportRootDirPath}/${domainNameGamma}`
+    : null;
+  const domainNameGammaBarrelExportRootFilePath = domainNameGamma
+    ? `${domainNameGammaBarrelExportRootDirPath}/types.ts`
+    : null;
+
+  const domainNameGammaBarrelFullExportStatement = (() => {
+    if (!domainNameGamma) return null;
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        return `export * as Application from "./Application/types";`;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY:
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        return `export * as Domain from "./Domain/types";`;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        return `export * as Infrastructure from "./Infrastructure/types";`;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+  })();
+  // One or the other
+  const domainNameZeta = domainNameGamma || domainNameBeta;
+  // One or the other
+  const domainNameZetaRootDirPath =
+    domainNameGammaBarrelExportRootDirPath ||
+    domainNameBetaBarrelExportRootDirPath;
+
+  const domainNameZetaBarrelExportRelativeImportPath = (() => {
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        return `./DTO`;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY: {
+        return `./Entity`;
+      }
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        return `./ValueObject`;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        return `./Schema`;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+  })();
+
+  const domainNameZeta_SUPER_ROOT_BarrelExportDirPath = (() => {
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        return `${domainNameZetaRootDirPath}/application/types`;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY:
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        return `${domainNameZetaRootDirPath}/domain/types`;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        return `${domainNameZetaRootDirPath}/infrastructure/types`;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+  })();
+  const domainNameZeta_SUPER_ROOT_BarrelExportRootFilePath = `${domainNameZeta_SUPER_ROOT_BarrelExportDirPath}/index.ts`;
+  const domainNameZetaBarrelFullExportStatement = (() => {
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        return `export * as DTO from "${domainNameZetaBarrelExportRelativeImportPath}";`;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY:
+        return `export * as Entity from "${domainNameZetaBarrelExportRelativeImportPath}";`;
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        return `export * as ValueObject from "${domainNameZetaBarrelExportRelativeImportPath}";`;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        return `export * as Schema from "${domainNameZetaBarrelExportRelativeImportPath}";`;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+  })();
+
+  const domainNameZeta_SUPER_ROOT_TypeDefinitionFilePath = (() => {
+    switch (activeRefactorType) {
+      case typeRefactorTypes.APPLICATION_DTO: {
+        return `${domainNameZetaRootDirPath}/application/types/DTO.ts`;
+      }
+      case typeRefactorTypes.DOMAIN_ENTITY: {
+        return `${domainNameZetaRootDirPath}/domain/types/Entity.ts`;
+      }
+      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
+        return `${domainNameZetaRootDirPath}/domain/types/ValueObject.ts`;
+      }
+      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
+        return `${domainNameZetaRootDirPath}/infrastructure/types/Schema.ts`;
+      }
+      default:
+        throw new Error("Bad Refactor Type");
+    }
+  })();
+
+  const maybeAddDomainBetaExportToAlphaBarrelExport = (f: SourceFile) => {};
+
+  const maybeAddSchemaBarrelExport = (f: SourceFile) => {
     // const emptyContents = [`export * as Schema from "./Schema";`];
     const existingDeclarations = f.getExportedDeclarations();
     f.getStatements().forEach((s) => {
       console.log({
         file: f.getFilePath(),
-        fn: "defaultInfrastructureTypeFileContent",
+        fn: "maybeAddSchemaBarrelExport",
         statement: s.getText(),
       });
     });
@@ -135,7 +329,7 @@ export const buildArgsFromDomainTypePath = ({
       });
     }
   };
-  const defaultApplicationTypeFileContent = (f: SourceFile) => {
+  const maybeAddDTOBarrelExport = (f: SourceFile) => {
     // const emptyContents = [`export * as DTO from "./DTO";`];
     const existingDeclarations = f.getExportedDeclarations();
     f.getStatements().forEach((s) => {
@@ -149,7 +343,7 @@ export const buildArgsFromDomainTypePath = ({
       });
     }
   };
-  const defaultDomainTypeFileContent = (f: SourceFile) => {
+  const maybeAddEntityOrValueObjectBarrelExport = (f: SourceFile) => {
     // const emptyContents = [
     //   `export * as Entity from "./Entity";`,
     //   `export * as ValueObject from "./ValueObject";`,
@@ -158,7 +352,7 @@ export const buildArgsFromDomainTypePath = ({
     f.getStatements().forEach((s) => {
       console.log({
         file: f.getFilePath(),
-        fn: "defaultDomainTypeFileContent",
+        fn: "maybeAddEntityOrValueObjectBarrelExport",
         statement: s.getText(),
       });
     });
@@ -170,7 +364,7 @@ export const buildArgsFromDomainTypePath = ({
       });
     }
   };
-  const maybeAddEmptyTypeContext = (f: SourceFile) => {
+  const maybeAddTSesoTypeImport = (f: SourceFile) => {
     // const emptyContents = [
     //   `import type * as TSeso from "@/lib/types";`,
     //   `export {};`,
@@ -195,112 +389,26 @@ export const buildArgsFromDomainTypePath = ({
     }
   };
 
-  const activeRefactorType: TRefactorTypes = (() => {
-    if (destinationDomainChain.includes(applicationDTO)) {
-      return typeRefactorTypes.APPLICATION_DTO;
-    }
-    if (destinationDomainChain.includes(domainValueObject)) {
-      return typeRefactorTypes.DOMAIN_VALUE_OBJECT;
-    }
-    if (destinationDomainChain.includes(domainEntity)) {
-      return typeRefactorTypes.DOMAIN_ENTITY;
-    }
-    if (destinationDomainChain.includes(infraSchema)) {
-      return typeRefactorTypes.INFRASTRCTURE_SCHEMA;
-    }
-    throw new Error(`Bad destinationDomainChain: ${destinationDomainChain}`);
-  })();
-  const nestedDomainToPath = (s: string): string =>
-    String(s.split(applicationDTO).shift());
-
-  const domainFilePathPart = (() => {
-    switch (activeRefactorType) {
-      case typeRefactorTypes.APPLICATION_DTO: {
-        const shortDomainChain = String(
-          destinationDomainChain.split(tsesoPrefix).pop()
-        );
-        const p2 = nestedDomainToPath(shortDomainChain);
-        return p2?.split(".").join("/");
-      }
-      case typeRefactorTypes.DOMAIN_ENTITY: {
-        const shortDomainChain = String(
-          destinationDomainChain.split(tsesoPrefix).pop()
-        );
-        const p2 = nestedDomainToPath(shortDomainChain);
-        return p2?.split(".").join("/");
-      }
-      case typeRefactorTypes.DOMAIN_VALUE_OBJECT: {
-        const shortDomainChain = String(
-          destinationDomainChain.split(tsesoPrefix).pop()
-        );
-        const p2 = nestedDomainToPath(shortDomainChain);
-        return p2?.split(".").join("/");
-      }
-      case typeRefactorTypes.INFRASTRCTURE_SCHEMA: {
-        const shortDomainChain = String(
-          destinationDomainChain.split(tsesoPrefix).pop()
-        );
-        const p2 = nestedDomainToPath(shortDomainChain);
-        return p2?.split(".").join("/");
-      }
-      default:
-        throw new Error("Bad Refactor Type");
-    }
-  })();
-  const [domainLevelFirst, domainLevelSecond] = domainFilePathPart.split("/");
-  const rootDomainFilePathPath = path.join(pwd, domainFolderPart);
-  const domainFolderPath = path.join(
-    rootDomainFilePathPath,
-    domainFilePathPart
-  );
-  const refactorTypesToDestinationFilesPath = {
-    [typeRefactorTypes.APPLICATION_DTO]: `${path.join(
-      domainFolderPath,
-      "application",
-      "types",
-      "DTO.ts"
-    )}`,
-    [typeRefactorTypes.DOMAIN_ENTITY]: `${path.join(
-      domainFolderPath,
-      "domain",
-      "types",
-      "Entity.ts"
-    )}`,
-    [typeRefactorTypes.DOMAIN_VALUE_OBJECT]: `${path.join(
-      domainFolderPath,
-      "domain",
-      "types",
-      "ValueObject.ts"
-    )}`,
-    [typeRefactorTypes.INFRASTRCTURE_SCHEMA]: `${path.join(
-      domainFolderPath,
-      "infrastructure",
-      "types",
-      "Schema.ts"
-    )}`,
-  } as const;
-
   const domainShapeConfig: TDomainShapeConfig = {
     application: {
       types: {
-        "DTO.ts": maybeAddEmptyTypeContext,
-        "index.ts": defaultApplicationTypeFileContent,
+        "DTO.ts": maybeAddTSesoTypeImport,
+        "index.ts": maybeAddDTOBarrelExport,
       },
     },
     domain: {
       types: {
-        "Entity.ts": maybeAddEmptyTypeContext,
-        "ValueObject.ts": maybeAddEmptyTypeContext,
-        "index.ts": defaultDomainTypeFileContent,
+        "Entity.ts": maybeAddTSesoTypeImport,
+        "ValueObject.ts": maybeAddTSesoTypeImport,
+        "index.ts": maybeAddEntityOrValueObjectBarrelExport,
       },
     },
     infrastructure: {
       types: {
-        "Schema.ts": maybeAddEmptyTypeContext,
-        "index.ts": defaultInfrastructureTypeFileContent,
+        "Schema.ts": maybeAddTSesoTypeImport,
+        "index.ts": maybeAddSchemaBarrelExport,
       },
     },
-    "types.ts": defaultDomainBarrelExportFileContent,
   };
 
   if (activeRefactorType === typeRefactorTypes.APPLICATION_DTO) {
@@ -313,24 +421,27 @@ export const buildArgsFromDomainTypePath = ({
   }
   if (activeRefactorType === typeRefactorTypes.DOMAIN_VALUE_OBJECT) {
     delete domainShapeConfig.domain?.types["Entity.ts"];
+    delete domainShapeConfig.application;
     delete domainShapeConfig.infrastructure;
   }
   if (activeRefactorType === typeRefactorTypes.INFRASTRCTURE_SCHEMA) {
     delete domainShapeConfig.domain;
+    delete domainShapeConfig.application;
     delete domainShapeConfig.infrastructure;
   }
-  const rootLevelTypeFilePath = `${rootDomainFilePathPath}/types.ts`;
-  const domainLevelFirstTypeFilePath = `${domainFolderPath}/types.ts`;
-  const domainLevelSecondTypeFilePath = domainLevelSecond
-    ? `${domainFolderPath}/${domainLevelSecond}/types.ts`
-    : null;
 
-  const pathsToFileContent: TPathsToFileContentObj[] = [
-    // {
-    //   content: addDomainLevelFirstBarrelExport(),
-    //   path: path.join(domainFolderPath, pp.join("/"), k),
-    // },
-  ];
+  const pathsToFileContent: TPathsToFileContentObj[] = [];
+  // Always add export to alpha domain (ddd)
+  pathsToFileContent.push({
+    content: maybeAddDomainBetaExportToAlphaBarrelExport,
+    path: domainNameAlphaBarrelExportRootFilePath,
+  });
+  if (domainNameGammaBarrelExportRootFilePath) {
+    pathsToFileContent.push({
+      content: maybeAddDomainBetaExportToAlphaBarrelExport,
+      path: domainNameGammaBarrelExportRootFilePath,
+    });
+  }
 
   function buildPathsToFileContent(oo: TDomainShapeConfig): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -342,7 +453,7 @@ export const buildArgsFromDomainTypePath = ({
           if (typeof attr === "function") {
             pathsToFileContent.push({
               content: attr,
-              path: path.join(domainFolderPath, pp.join("/"), k),
+              path: path.join(domainNameZeta_SUPER_ROOT_BarrelExportDirPath, k),
             });
           }
           return runner(attr, pp.concat(k));
@@ -351,53 +462,36 @@ export const buildArgsFromDomainTypePath = ({
     }
     runner(oo, []);
   }
+
   buildPathsToFileContent(domainShapeConfig);
   // Hack to put missing imports in existing files
 
-  // const maybeNestedDomainFilePathChunks = String(
-  //   domainFolderPath.split(domainFolderPart)
-  // ).split("/");
-
-  // const creatingOrUpdatingNestedBarrelExport =
-  //   maybeNestedDomainFilePathChunks.length > 1;
-  // if (creatingOrUpdatingNestedBarrelExport) {
-  //   // remove last el.
-  //   const pathToAddExport = domainFolderPath
-  //     .split("/")
-  //     .slice(0, -1)
-  //     .join("/");
-  //   const moduleSpecifier = `./${domainFolderPath.split("/").pop()}/types`;
-  //   result.push({
-  //     content: (f: SourceFile) => {
-  //       f.addExportDeclaration({
-  //         isTypeOnly: false,
-  //         moduleSpecifier,
-  //         namespaceExport: maybeNestedDomainFilePathChunks.pop(),
-  //       });
-  //     },
-  //     path: path.join(pathToAddExport, "types.ts"),
-  //   });
-  // }
-  // return result;
-
   const defaultArgs: TExtensionParamsBlob = {
-    destinationDomainChain,
-    destinationFilePath:
-      refactorTypesToDestinationFilesPath[activeRefactorType],
-    domainFilePathPart,
-    domainFolderPart,
-    domainFolderPath,
-    domainLevelFirst,
-    domainLevelFirstTypeFilePath,
-    domainLevelSecond,
-    domainLevelSecondTypeFilePath,
+    _proposedTypeReferenceChain,
+    domainNameAlpha,
+    domainNameAlphaBarrelExportRootDirPath,
+    domainNameAlphaBarrelExportRootFilePath,
+    domainNameAlphaBarrelFullExportStatement,
+    domainNameBeta,
+    domainNameBetaBarrelExportRelativeImportPath,
+    domainNameBetaBarrelExportRootDirPath,
+    domainNameBetaBarrelExportRootFilePath,
+    domainNameBetaBarrelFullExportStatement,
+    domainNameGamma,
+    domainNameGammaBarrelExportRootDirPath,
+    domainNameGammaBarrelExportRootFilePath,
+    domainNameGammaBarrelFullExportStatement,
+    domainNameZeta,
+    domainNameZetaBarrelExportRelativeImportPath,
+    domainNameZetaBarrelFullExportStatement,
+    domainNameZetaRootDirPath,
+    domainNameZeta_SUPER_ROOT_BarrelExportDirPath,
+    domainNameZeta_SUPER_ROOT_BarrelExportRootFilePath,
+    domainNameZeta_SUPER_ROOT_TypeDefinitionFilePath,
     domainShapeConfig,
     pathsToFileContent,
-    refactorTypesToDestinationFilesPath,
-    rootDomainFilePathPath,
-    rootLevelTypeFilePath,
+    proposedTypeChainReferenceShort,
     topLevelNamespace,
-    tsesoPrefix,
   };
   return defaultArgs;
 };
@@ -406,7 +500,7 @@ export function buildDestinationDomainPathSuggested(p: {
   cwf: string;
   nodeText: string;
 }) {
-  const p1 = String(p.cwf.split(domainFolderPart).pop());
+  const p1 = String(p.cwf.split(domainNameAlpha).pop());
   if (p1.includes("/application/")) {
     const p2 = p1.split("/application/").shift(); // looks like: Shared/Media
     const p3 = p2
@@ -440,8 +534,9 @@ export function buildDestinationDomainPathSuggested(p: {
 // $ tsc src/buildArgsFromDomainTypePath.ts  && node src/buildArgsFromDomainTypePath.js && rm src/buildArgsFromDomainTypePath.js
 console.dir(
   buildArgsFromDomainTypePath({
-    destinationDomainChain:
-      "TSeso.TD.Shared.Foo.Application.DTO.TCreateDocumentDTO",
+    proposedTypeReferenceChain:
+      // "TSeso.TD.Alpha.Domain.ValueObject.TCreateDocumentDTO",
+      "TSeso.TD.Alpha.Gamma.Domain.ValueObject.TCreateDocumentDTO",
     pwd: "/Users/willdembinski/projects/seso-app",
   }),
   { depth: 100 }

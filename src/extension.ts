@@ -3,6 +3,9 @@
 import { IndentationText, Project, SyntaxKind } from "ts-morph";
 import * as vscode from "vscode";
 
+import { buildArgsFromDomainTypePath } from "./helpers";
+
+import type { TExtensionParamsBlob } from "./helpers";
 import type {
   FormatCodeSettings,
   LanguageService,
@@ -10,7 +13,6 @@ import type {
   SourceFile,
   UserPreferences,
 } from "ts-morph";
-import { TExtensionParamsBlob } from "./helpers";
 
 const tsesoPrefix = "TSeso.TD.";
 
@@ -123,7 +125,7 @@ export async function activate(context: vscode.ExtensionContext) {
         console.log("Waiting for tasks to complete...");
         await clearJobTaskQueue(taskQueue);
         taskQueue = [];
-        const _destinationDomain = (await vscode.window.showInputBox({
+        const destinationDomainChain = (await vscode.window.showInputBox({
           ignoreFocusOut: true,
           prompt: "Provide the complete domain path for your new provider",
           title: "TSeso.TD Domain Path",
@@ -158,59 +160,12 @@ export async function activate(context: vscode.ExtensionContext) {
           },
           value: tsesoPrefix,
         })) as string;
-        // const destinationDomain = "Shared.Media.Application.DTO";
-        const destinationDomain = _destinationDomain
-          .split(tsesoPrefix)
-          .pop()
-          ?.split(".")
-          .filter((s) => s !== ".")
-          .join(".");
-        if (!destinationDomain) {
-          throw new Error("Bad destinationDomain");
-        }
 
-        const domainFolderPart = "ddd";
-        const defaultDomainBarrelExportFileContent =
-          () => `export * as Application from "./application/types";
-  export * as Domain from "./domain/types";
-  export * as Infrastructure from "./infrastructure/types";
-  `;
-        const defaultInfrastructureTypeFileContent = () =>
-          `export * as Schema from "./Schema";`;
-        const defaultApplicationTypeFileContent = () =>
-          `export * as DTO from "./DTO";`;
-        const defaultDomainTypeFileContent =
-          () => `export * as Entity from "./Entity";
-  export * as ValueObject from "./ValueObject";
-      `;
-        const emptyTypeFileContent =
-          () => `import type * as TSeso from "@/lib/types";
-  export {};
-      `;
-        const topLevelNamespace = "TSeso.TD";
-        const domainFilePathPart = (() => {
-          if (destinationDomain.includes(".Application.")) {
-            return `${destinationDomain
-              .split(".Application.")[0]
-              .split(".")
-              .join("/")}`;
-          }
-          if (destinationDomain.includes(".Domain.")) {
-            return `${destinationDomain
-              .split(".Domain.")[0]
-              .split(".")
-              .join("/")}`;
-          }
-          if (destinationDomain.includes(".Infrastructure.")) {
-            return `${destinationDomain
-              .split(".Infrastructure.")[0]
-              .split(".")
-              .join("/")}`;
-          }
-        })() as string;
+        const constructedArgs = buildArgsFromDomainTypePath({
+          destinationDomainChain,
+          pwd,
+        });
 
-
-        
         const formatFilePretty = (
           sourceFile: SourceFile,
           formSettings: FormatCodeSettings,
@@ -240,10 +195,10 @@ export async function activate(context: vscode.ExtensionContext) {
           );
           console.timeLog();
 
-          const defintions = languageService.getDefinitions(n).map((n) => ({
-            node: n.getNode(),
-            sourceFile: n.getSourceFile(),
-            symbolNameAtDefintion: n.getNode().getSymbolOrThrow().getName(),
+          const defintions = languageService.getDefinitions(n).map((nn) => ({
+            node: nn.getNode(),
+            sourceFile: nn.getSourceFile(),
+            symbolNameAtDefintion: nn.getNode().getSymbolOrThrow().getName(),
           }));
           if (defintions.length > 1) {
             throw new Error(
@@ -279,7 +234,6 @@ export async function activate(context: vscode.ExtensionContext) {
             `Could not find desc in file ${sourceFile.getFilePath()} at position ${pos}`
           );
         };
-     
 
         const createTypeFilesIfNotExistOrAppendToExisting = (
           project: Project,
@@ -367,7 +321,7 @@ export async function activate(context: vscode.ExtensionContext) {
             onlyDefintionNodeForSelectedNode.symbolNameAtDefintion,
         });
         const args = {
-          ...defaultArgs,
+          ...constructedArgs,
           definitionName: onlyDefintionNodeForSelectedNode.node
             .getSymbolOrThrow()
             .getName(),
@@ -395,10 +349,7 @@ export async function activate(context: vscode.ExtensionContext) {
         // Add TSeso import if not exist
         // Delete old imports
 
-        createTypeFilesIfNotExistOrAppendToExisting(
-          project,
-          args
-        );
+        createTypeFilesIfNotExistOrAppendToExisting(project, args);
 
         const initialNodeAtCursorPositionToFindDeclarationOf =
           sourceFile.getDescendantAtPos(offset);
@@ -466,7 +417,7 @@ export async function activate(context: vscode.ExtensionContext) {
               }
               if (["TypeReference", "QualifiedName"].includes(parentKind)) {
                 parentNode.replaceWithText(
-                  `TSeso.TD.${args.destinationDomain}.${args.definitionName}`
+                  `TSeso.TD.${args.destinationDomainChain}.${args.definitionName}`
                 );
                 return;
               }
