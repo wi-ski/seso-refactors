@@ -1,7 +1,5 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as path from "path";
-
 import { IndentationText, Project, SyntaxKind } from "ts-morph";
 import * as vscode from "vscode";
 
@@ -281,28 +279,7 @@ export async function activate(context: vscode.ExtensionContext) {
             `Could not find desc in file ${sourceFile.getFilePath()} at position ${pos}`
           );
         };
-        function buildPathsToFileContent(
-          object: Record<string, any>
-        ): { content: string; path: string }[] {
-          const result: any[] = [];
-          function runner(o: Record<string, any>, p: string[]): void {
-            const keys = Object.keys(o);
-            if (keys.length) {
-              return keys.forEach((k) => {
-                const attr = o[k];
-                if (typeof attr === "string") {
-                  return result.push({
-                    content: attr,
-                    path: `${p.join("/")}/${k}`,
-                  });
-                }
-                return runner(attr, p.concat(k));
-              });
-            }
-          }
-          runner(object, []);
-          return result;
-        }
+     
 
         const createTypeFilesIfNotExistOrAppendToExisting = (
           project: Project,
@@ -443,7 +420,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const targetRefactorSourceFile =
           declarationNodeForDefintion.getSourceFile();
         const destinationRefactorSourceFile = project.getSourceFileOrThrow(
-          defaultArgs.destinationFilePath
+          args.destinationFilePath
         );
 
         console.log("Crawling the tree...");

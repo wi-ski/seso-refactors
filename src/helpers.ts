@@ -34,11 +34,18 @@ type TRefactorTypesToDestinationFilesPath = Record<TRefactorTypes, string>;
 export type TExtensionParamsBlob = {
   destinationDomainChain: string;
   destinationFilePath: string;
+  domainFilePathPart: string;
   domainFolderPart: string;
   domainFolderPath: string;
+  domainLevelFirst: string;
+  domainLevelFirstTypeFilePath: string;
+  domainLevelSecond: string;
+  domainLevelSecondTypeFilePath: string | null;
   domainShapeConfig: TDomainShapeConfig;
   pathsToFileContent: TPathsToFileContent;
   refactorTypesToDestinationFilesPath: TRefactorTypesToDestinationFilesPath;
+  rootDomainFilePathPath: string;
+  rootLevelTypeFilePath: string;
   topLevelNamespace: string;
   tsesoPrefix: string;
 };
@@ -240,7 +247,12 @@ export const buildArgsFromDomainTypePath = ({
         throw new Error("Bad Refactor Type");
     }
   })();
-  const domainFolderPath = path.join(pwd, domainFolderPart, domainFilePathPart);
+  const [domainLevelFirst, domainLevelSecond] = domainFilePathPart.split("/");
+  const rootDomainFilePathPath = path.join(pwd, domainFolderPart);
+  const domainFolderPath = path.join(
+    rootDomainFilePathPath,
+    domainFilePathPart
+  );
   const refactorTypesToDestinationFilesPath = {
     [typeRefactorTypes.APPLICATION_DTO]: `${path.join(
       domainFolderPath,
@@ -307,63 +319,83 @@ export const buildArgsFromDomainTypePath = ({
     delete domainShapeConfig.domain;
     delete domainShapeConfig.infrastructure;
   }
+  const rootLevelTypeFilePath = `${rootDomainFilePathPath}/types.ts`;
+  const domainLevelFirstTypeFilePath = `${domainFolderPath}/types.ts`;
+  const domainLevelSecondTypeFilePath = domainLevelSecond
+    ? `${domainFolderPath}/${domainLevelSecond}/types.ts`
+    : null;
 
-  const pathsToFileContent =
-    (function buildPathsToFileContent(): TPathsToFileContent {
-      const result: TPathsToFileContentObj[] = [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      function runner(o: Record<string, any>, pp: string[]): void {
-        const keys = Object.keys(o);
-        if (keys.length) {
-          return keys.forEach((k) => {
-            const attr = o[k];
-            if (typeof attr === "function") {
-              return result.push({
-                content: attr,
-                path: path.join(domainFolderPath, pp.join("/"), k),
-              });
-            }
-            return runner(attr, pp.concat(k));
-          });
-        }
-      }
-      runner(domainShapeConfig, []);
-      // Hack to put missing imports in existing files
-      const maybeNestedDomainFilePathChunks = String(
-        domainFolderPath.split(domainFolderPart)
-      ).split("/");
-      const creatingOrUpdatingNestedBarrelExport =
-        maybeNestedDomainFilePathChunks.length > 1;
-      if (creatingOrUpdatingNestedBarrelExport) {
-        // remove last el.
-        const pathToAddExport = domainFolderPath
-          .split("/")
-          .slice(0, -1)
-          .join("/");
-        const moduleSpecifier = `./${domainFolderPath.split("/").pop()}/types`;
-        result.push({
-          content: (f: SourceFile) => {
-            f.addExportDeclaration({
-              isTypeOnly: false,
-              moduleSpecifier,
-              namespaceExport: maybeNestedDomainFilePathChunks.pop(),
+  const pathsToFileContent: TPathsToFileContentObj[] = [
+    // {
+    //   content: addDomainLevelFirstBarrelExport(),
+    //   path: path.join(domainFolderPath, pp.join("/"), k),
+    // },
+  ];
+
+  function buildPathsToFileContent(oo: TDomainShapeConfig): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function runner(o: Record<string, any>, pp: string[]): void {
+      const keys = Object.keys(o);
+      if (keys.length) {
+        return keys.forEach((k) => {
+          const attr = o[k];
+          if (typeof attr === "function") {
+            pathsToFileContent.push({
+              content: attr,
+              path: path.join(domainFolderPath, pp.join("/"), k),
             });
-          },
-          path: path.join(pathToAddExport, "types.ts"),
+          }
+          return runner(attr, pp.concat(k));
         });
       }
-      return result;
-    })();
+    }
+    runner(oo, []);
+  }
+  buildPathsToFileContent(domainShapeConfig);
+  // Hack to put missing imports in existing files
+
+  // const maybeNestedDomainFilePathChunks = String(
+  //   domainFolderPath.split(domainFolderPart)
+  // ).split("/");
+
+  // const creatingOrUpdatingNestedBarrelExport =
+  //   maybeNestedDomainFilePathChunks.length > 1;
+  // if (creatingOrUpdatingNestedBarrelExport) {
+  //   // remove last el.
+  //   const pathToAddExport = domainFolderPath
+  //     .split("/")
+  //     .slice(0, -1)
+  //     .join("/");
+  //   const moduleSpecifier = `./${domainFolderPath.split("/").pop()}/types`;
+  //   result.push({
+  //     content: (f: SourceFile) => {
+  //       f.addExportDeclaration({
+  //         isTypeOnly: false,
+  //         moduleSpecifier,
+  //         namespaceExport: maybeNestedDomainFilePathChunks.pop(),
+  //       });
+  //     },
+  //     path: path.join(pathToAddExport, "types.ts"),
+  //   });
+  // }
+  // return result;
 
   const defaultArgs: TExtensionParamsBlob = {
     destinationDomainChain,
     destinationFilePath:
       refactorTypesToDestinationFilesPath[activeRefactorType],
+    domainFilePathPart,
     domainFolderPart,
     domainFolderPath,
+    domainLevelFirst,
+    domainLevelFirstTypeFilePath,
+    domainLevelSecond,
+    domainLevelSecondTypeFilePath,
     domainShapeConfig,
     pathsToFileContent,
     refactorTypesToDestinationFilesPath,
+    rootDomainFilePathPath,
+    rootLevelTypeFilePath,
     topLevelNamespace,
     tsesoPrefix,
   };
