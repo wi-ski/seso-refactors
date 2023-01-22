@@ -12,6 +12,7 @@ import type {
   SourceFile,
   UserPreferences,
 } from "ts-morph";
+import { TExtensionParamsBlob } from "./helpers";
 
 const tsesoPrefix = "TSeso.TD.";
 
@@ -209,72 +210,9 @@ export async function activate(context: vscode.ExtensionContext) {
               .join("/")}`;
           }
         })() as string;
-        const defaultArgs = {
-          destinationDomain,
-          destinationFilePath: (() => {
-            if (destinationDomain.includes(".Application.")) {
-              const secondPart = "application";
-              const thirdPart = destinationDomain.split(".Application.")[1];
-              return `${path.join(
-                pwd,
-                domainFolderPart,
-                domainFilePathPart,
-                secondPart,
-                "types",
-                thirdPart
-              )}.ts`;
-            }
-            if (destinationDomain.includes(".Domain.")) {
-              const secondPart = "domain";
-              const thirdPart = destinationDomain.split(".Domain.")[1];
-              return `${path.join(
-                pwd,
-                domainFolderPart,
-                domainFilePathPart,
-                secondPart,
-                "types",
-                thirdPart
-              )}.ts`;
-            }
-            if (destinationDomain.includes(".Infrastructure.")) {
-              const secondPart = "infrastructure";
-              const thirdPart = destinationDomain.split(".Infrastructure.")[1];
-              return `${path.join(
-                pwd,
-                domainFolderPart,
-                domainFilePathPart,
-                secondPart,
-                "types",
-                thirdPart
-              )}.ts`;
-            }
-          })() as string,
-          domainFolderPart,
-          domainShapeConfig: {
-            application: {
-              types: {
-                "DTO.ts": emptyTypeFileContent(),
-                "index.ts": defaultApplicationTypeFileContent(),
-              },
-            },
-            domain: {
-              types: {
-                "Entity.ts": emptyTypeFileContent(),
-                "ValueObject.ts": emptyTypeFileContent(),
-                "index.ts": defaultDomainTypeFileContent(),
-              },
-            },
-            infrastructure: {
-              types: {
-                "Schema.ts": emptyTypeFileContent(),
-                "index.ts": defaultInfrastructureTypeFileContent(),
-              },
-            },
-            "types.ts": defaultDomainBarrelExportFileContent(),
-          },
-          topLevelNamespace,
-        } as const;
 
+
+        
         const formatFilePretty = (
           sourceFile: SourceFile,
           formSettings: FormatCodeSettings,
@@ -368,17 +306,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
         const createTypeFilesIfNotExistOrAppendToExisting = (
           project: Project,
-          domainShapeConf: (typeof defaultArgs)["domainShapeConfig"]
+          domainShapeConf: TExtensionParamsBlob
         ) => {
-          const pathsToContent = buildPathsToFileContent(domainShapeConf).map(
-            (o) => {
-              return {
-                ...o,
-                path: `${pwd}/${defaultArgs.domainFolderPart}/${domainFilePathPart}/${o.path}`,
-              };
-            }
-          );
-          pathsToContent.forEach((pathToContentObj) => {
+          domainShapeConf.pathsToFileContent.forEach((pathToContentObj) => {
             console.log(
               `Attempting to instantiate file: ${pathToContentObj.path}`
             );
@@ -490,7 +420,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
         createTypeFilesIfNotExistOrAppendToExisting(
           project,
-          args.domainShapeConfig
+          args
         );
 
         const initialNodeAtCursorPositionToFindDeclarationOf =

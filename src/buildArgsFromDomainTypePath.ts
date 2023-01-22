@@ -191,7 +191,7 @@ export {};
           if (typeof attr === "string") {
             return result.push({
               content: attr,
-              path: `${p.join("/")}/${k}`,
+              path: `${pwd}/${domainFolderPart}/${domainFilePathPart}/${p.join("/")}/${k}`,
             });
           }
           return runner(attr, p.concat(k));
@@ -206,7 +206,6 @@ export {};
     destinationDomainChain,
     destinationFilePath:
       refactorTypesToDestinationFilesPath[activeRefactorType],
-    domainFolderPart,
     domainFolderPath,
     domainShapeConfig,
     pathsToFileContent,
