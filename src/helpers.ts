@@ -62,7 +62,6 @@ export type TExtensionParamsBlob = {
   proposedTypeChainReferenceShort: string;
   topLevelNamespace: string;
 };
-const TSesoString = "TSeso";
 const topLevelNamespace = "TSeso.TD";
 const applicationDTO = ".Application.DTO.";
 const domainValueObject = ".Domain.ValueObject.";
@@ -340,106 +339,121 @@ export const buildArgsFromDomainTypePath = ({
 
   const domainNameZetaSuperRootBarrelExportRootFilePath = `${domainNameZetaSuperRootDirPath}/index.ts`;
 
-  const maybeAddDomainBetaExportToAlphaBarrelExport = (f: SourceFile) => {};
-  const maybeAddDomainGammaExportToBetaBarrelExport = (f: SourceFile) => {};
-  const maybeAddSuperRootExportToBetaBarrelExport = (f: SourceFile) => {};
+  const maybeAddDomainBetaExportToAlphaBarrelExport = (f: SourceFile) => {
+    const ss = f.getStatements();
+    const containsExportAlready = ss.some((s) => {
+      const t = s.getText();
+      console.warn("maybeAddDomainBetaExportToAlphaBarrelExport");
+      console.warn(f.getFilePath());
+      console.warn(t);
+      console.warn(domainNameAlphaBarrelExportRootFileFullExportStatement);
+      return t === domainNameAlphaBarrelExportRootFileFullExportStatement;
+    });
+    if (containsExportAlready) return;
+    f.addStatements(domainNameAlphaBarrelExportRootFileFullExportStatement);
+  };
+  const maybeAddDomainNameGammaExportToBetaBarrelExport = (f: SourceFile) => {
+    const ss = f.getStatements();
+    const containsExportAlready = ss.some((s) => {
+      const t = s.getText();
+      console.warn("maybeAddDomainNameGammaExportToBetaBarrelExport");
+      console.warn(f.getFilePath());
+      console.warn(t);
+      console.warn(domainNameAlphaBarrelExportRootFileFullExportStatement);
+      return (
+        s.getText() === domainNameAlphaBarrelExportRootFileFullExportStatement
+      );
+    });
+    if (containsExportAlready) return;
+    f.addStatements(domainNameAlphaBarrelExportRootFileFullExportStatement);
+  };
+  const maybeAddDomainNameBetaBarrelExportRootFilePath = (f: SourceFile) => {
+    const ss = f.getStatements();
+    const containsExportAlready = ss.some((s) => {
+      const t = s.getText();
+      console.warn("maybeAddDomainNameBetaBarrelExportRootFilePath");
+      console.warn(f.getFilePath());
+      console.warn(t);
+      console.warn(domainNameBetaBarrelExportRootFileFullExportStatement);
+      return (
+        s.getText() === domainNameBetaBarrelExportRootFileFullExportStatement
+      );
+    });
+    if (containsExportAlready) return;
+    f.addStatements(domainNameBetaBarrelExportRootFileFullExportStatement);
+  };
 
-  const maybeAddSchemaBarrelExport = (f: SourceFile) => {
-    // const emptyContents = [`export * as Schema from "./Schema";`];
-    const existingDeclarations = f.getExportedDeclarations();
-    f.getStatements().forEach((s) => {
-      console.log({
-        file: f.getFilePath(),
-        fn: "maybeAddSchemaBarrelExport",
-        statement: s.getText(),
-      });
+  const maybeAddDomainNameZetaBarrelExportRootFileFullExportStatement = (
+    f: SourceFile
+  ) => {
+    const ss = f.getStatements();
+    const containsExportAlready = ss.some((s) => {
+      const t = s.getText();
+      console.warn(
+        "maybeAddDomainNameZetaBarrelExportRootFileFullExportStatement"
+      );
+      console.warn(f.getFilePath());
+      console.warn(t);
+      console.warn(domainNameZetaBarrelExportRootFileFullExportStatement);
+      return (
+        s.getText() === domainNameZetaBarrelExportRootFileFullExportStatement
+      );
     });
-    if (!existingDeclarations.get("Schema")) {
-      f.addExportDeclaration({
-        isTypeOnly: false,
-        moduleSpecifier: "./Schema",
-        namespaceExport: "Schema",
-      });
-    }
+    if (containsExportAlready) return;
+    f.addStatements(domainNameZetaBarrelExportRootFileFullExportStatement);
   };
-  const maybeAddDTOBarrelExport = (f: SourceFile) => {
-    // const emptyContents = [`export * as DTO from "./DTO";`];
-    const existingDeclarations = f.getExportedDeclarations();
-    f.getStatements().forEach((s) => {
-      console.log({ file: f.getFilePath(), statement: s.getText() });
+
+  const maybeAddDomainNameZetaBarrelExportRootFilePath = (f: SourceFile) => {
+    const ss = f.getStatements();
+    const containsExportAlready = ss.some((s) => {
+      const t = s.getText();
+      console.warn("maybeAddDomainNameZetaBarrelExportRootFilePath");
+      console.warn(f.getFilePath());
+      console.warn(t);
+      console.warn(domainNameZetaBarrelExportRootFileFullExportStatement);
+      return (
+        s.getText() === domainNameZetaBarrelExportRootFileFullExportStatement
+      );
     });
-    if (!existingDeclarations.get("DTO")) {
-      f.addExportDeclaration({
-        isTypeOnly: false,
-        moduleSpecifier: "./DTO",
-        namespaceExport: "DTO",
-      });
-    }
+    if (containsExportAlready) return;
+    f.addStatements(domainNameZetaBarrelExportRootFileFullExportStatement);
   };
-  const maybeAddEntityOrValueObjectBarrelExport = (f: SourceFile) => {
-    // const emptyContents = [
-    //   `export * as Entity from "./Entity";`,
-    //   `export * as ValueObject from "./ValueObject";`,
-    // ];
-    const existingDeclarations = f.getExportedDeclarations();
-    f.getStatements().forEach((s) => {
-      console.log({
-        file: f.getFilePath(),
-        fn: "maybeAddEntityOrValueObjectBarrelExport",
-        statement: s.getText(),
-      });
-    });
-    if (!existingDeclarations.get("DTO")) {
-      f.addExportDeclaration({
-        isTypeOnly: false,
-        moduleSpecifier: "./DTO",
-        namespaceExport: "DTO",
-      });
-    }
-  };
+
   const maybeAddTSesoTypeImportToTypeDefintionFile = (f: SourceFile) => {
-    // const emptyContents = [
-    //   `import type * as TSeso from "@/lib/types";`,
-    //   `export {};`,
-    // ];
-    const hasTsesoImport = f.getImportDeclarations().some((d) => {
-      const namespace = d.getNamespaceImport();
-      if (namespace) {
-        const namespaceImportText = namespace.getText();
-        console.log(`NAMEXAPECE IMPORT TEXT`);
-        console.log(namespaceImportText);
-        return namespaceImportText === TSesoString;
-      }
-      return false;
+    const t = `import type * as TSeso from "@/lib/types";`;
+    const ss = f.getStatements();
+    const containsExportAlready = ss.some((s) => {
+      console.warn("maybeAddTSesoTypeImportToTypeDefintionFile");
+      console.warn(f.getFilePath());
+      console.warn(t);
+      console.warn(domainNameZetaBarrelExportRootFileFullExportStatement);
+      return s.getText() === t;
     });
-
-    if (!hasTsesoImport) {
-      f.addImportDeclaration({
-        isTypeOnly: true,
-        moduleSpecifier: "@/lib/types",
-        namespaceImport: TSesoString,
-      });
-    }
+    if (containsExportAlready) return;
+    f.addStatements(t);
   };
 
   const domainShapeConfig: TDomainShapeConfig = {
     application: {
       types: {
         "DTO.ts": maybeAddTSesoTypeImportToTypeDefintionFile,
-        "index.ts": maybeAddDTOBarrelExport,
+        "index.ts":
+          maybeAddDomainNameZetaBarrelExportRootFileFullExportStatement,
       },
     },
     domain: {
       types: {
         "Entity.ts": maybeAddTSesoTypeImportToTypeDefintionFile,
         "ValueObject.ts": maybeAddTSesoTypeImportToTypeDefintionFile,
-        "index.ts": maybeAddEntityOrValueObjectBarrelExport,
+        "index.ts":
+          maybeAddDomainNameZetaBarrelExportRootFileFullExportStatement,
       },
     },
     infrastructure: {
       types: {
         "Schema.ts": maybeAddTSesoTypeImportToTypeDefintionFile,
-        "index.ts": maybeAddSchemaBarrelExport,
+        "index.ts":
+          maybeAddDomainNameZetaBarrelExportRootFileFullExportStatement,
       },
     },
   };
@@ -470,12 +484,17 @@ export const buildArgsFromDomainTypePath = ({
     path: domainNameAlphaBarrelExportRootFilePath,
   });
   pathsToFileContent.push({
-    content: maybeAddSuperRootExportToBetaBarrelExport,
+    content: maybeAddDomainNameBetaBarrelExportRootFilePath,
     path: domainNameBetaBarrelExportRootFilePath,
   });
   pathsToFileContent.push({
-    content: maybeAddDomainGammaExportToBetaBarrelExport,
+    content: maybeAddDomainNameGammaExportToBetaBarrelExport,
     path: domainNameBetaBarrelExportRootFilePath,
+  });
+
+  pathsToFileContent.push({
+    content: maybeAddDomainNameZetaBarrelExportRootFilePath,
+    path: domainNameZetaBarrelExportRootFilePath,
   });
 
   function buildPathsToFileContent(oo: TDomainShapeConfig): void {
@@ -570,12 +589,13 @@ export function buildDestinationDomainPathSuggested(p: {
 }
 // Testy
 // $ tsc src/buildArgsFromDomainTypePath.ts  && node src/buildArgsFromDomainTypePath.js && rm src/buildArgsFromDomainTypePath.js
-console.dir(
-  buildArgsFromDomainTypePath({
-    proposedTypeReferenceChain:
-      // "TSeso.TD.Alpha.Domain.ValueObject.TCreateDocumentDTO",
-      "TSeso.TD.Alpha.Application.DTO.TCreateDocumentDTO",
-    pwd: "/Users/willdembinski/projects/seso-app",
-  }),
-  { depth: 100 }
-);
+// console.dir(
+//   buildArgsFromDomainTypePath({
+//     proposedTypeReferenceChain:
+//       // "TSeso.TD.Alpha.Domain.ValueObject.TCreateDocumentDTO",
+//       "TSeso.TD.Alpha.Gamma.Application.DTO.TCreateDocumentDTO",
+//     // "TSeso.TD.Alpha.Application.DTO.TCreateDocumentDTO",
+//     pwd: "/Users/willdembinski/projects/seso-app",
+//   }),
+//   { depth: 100 }
+// );

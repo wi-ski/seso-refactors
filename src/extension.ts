@@ -3,7 +3,10 @@
 import { IndentationText, Project, SyntaxKind } from "ts-morph";
 import * as vscode from "vscode";
 
-import { buildArgsFromDomainTypePath } from "./helpers";
+import {
+  buildArgsFromDomainTypePath,
+  buildDestinationDomainPathSuggested,
+} from "./helpers";
 
 import type { TExtensionParamsBlob } from "./helpers";
 import type {
@@ -14,43 +17,110 @@ import type {
   UserPreferences,
 } from "ts-morph";
 
-const tsesoPrefix = "TSeso.TD.";
+const pluckMandatorVsCodeAttrsOrThrow = (vscodeLibRef: typeof vscode) => {
+  const workspaceFolders = vscodeLibRef?.workspace?.workspaceFolders;
+  const activeTextEditor = vscodeLibRef.window.activeTextEditor;
+  if (!workspaceFolders) {
+    throw new Error("Bad workspaceFolders");
+  }
+  if (!activeTextEditor) {
+    throw new Error("Bad activeTextEditor");
+  }
 
+  return {
+    pwd: workspaceFolders[0].uri.path,
+  };
+};
+const getDescendantAtPosOrThrow = (sf: SourceFile, pos: number) => {
+  const n = sf.getDescendantAtPos(pos);
+  if (n) return n;
+  throw new Error("Could not find childAtPos");
+};
+
+const formatFilePretty = (
+  sf: SourceFile,
+  formSettings: FormatCodeSettings,
+  uprefs: UserPreferences
+) => {
+  sf.fixUnusedIdentifiers(formSettings, uprefs);
+  sf.fixMissingImports(formSettings, uprefs);
+  sf.organizeImports(formSettings, uprefs);
+  // Todo: Somehow trigger editor file formatting
+  sf.formatText(formSettings);
+};
+const tsesoPrefix = "TSeso.TD.";
+// This method is called when your extension is activated
+// Your extension is activated the very first time the command is executed
+const getTypesSingleDefintionNodeAndSourceFileOrThrow = (
+  ls: LanguageService,
+  n: Node
+): {
+  node: Node;
+  sourceFile: SourceFile;
+  symbolNameAtDefintion: string;
+} => {
+  console.log(
+    `DOING - getTypesSingleDefintionNodeAndSourceFileOrThrow for: ${n.getText()}. File: ${n
+      .getSourceFile()
+      .getFilePath()}`
+  );
+  console.timeLog();
+
+  const defintions = ls.getDefinitions(n).map((nn) => ({
+    node: nn.getNode(),
+    sourceFile: nn.getSourceFile(),
+    symbolNameAtDefintion: nn.getNode().getSymbolOrThrow().getName(),
+  }));
+  if (defintions.length > 1) {
+    throw new Error(
+      `Found more than one defintion, files: ${defintions
+        .map((d) => d.sourceFile.getSourceFile().getFilePath())
+        .join(",")}`
+    );
+  }
+  const d = defintions.pop();
+  if (!d) {
+    throw new Error("Didn't find a defintion node");
+  }
+  const symbolNameAtDefintion = d.symbolNameAtDefintion;
+  console.log(
+    `DONE - getTypesSingleDefintionNodeAndSourceFileOrThrow for: ${n.getText()}. File: ${n
+      .getSourceFile()
+      .getFilePath()}`
+  );
+  console.log(`symbolNameAtDefintion: ${symbolNameAtDefintion}`);
+  console.timeLog();
+  return d;
+};
 type TTask = () => Promise<any>;
 type TTaskQueue = TTask[];
-async function clearJobTaskQueue(queue: TTaskQueue) {
-  for (let taskIds = 0; taskIds < queue.length; taskIds++) {
-    const t = queue[taskIds];
-    await t();
-  }
-}
 
 export async function activate(context: vscode.ExtensionContext) {
-  let taskQueue: (() => Promise<any>)[] = [];
+  let taskQueue: TTaskQueue = [];
   let taskLock = 0;
+  async function clearJobTaskQueueAndReset() {
+    taskLock = 1;
+    try {
+      for (let taskIds = 0; taskIds < taskQueue.length; taskIds++) {
+        const t = taskQueue[taskIds];
+        await t();
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      taskQueue = [];
+      taskLock = 0;
+    }
+  }
   setInterval(async () => {
     if (taskLock) {
       console.log("Lock detected, exiting.");
       return;
     }
     console.log("Clearing file watch task queue");
-    await clearJobTaskQueue(taskQueue);
-    taskQueue = [];
+    await clearJobTaskQueueAndReset();
   }, 1000);
-  const pluckMandatorVsCodeAttrsOrThrow = (vscodeLibRef: typeof vscode) => {
-    const workspaceFolders = vscodeLibRef?.workspace?.workspaceFolders;
-    const activeTextEditor = vscodeLibRef.window.activeTextEditor;
-    if (!workspaceFolders) {
-      throw new Error("Bad workspaceFolders");
-    }
-    if (!activeTextEditor) {
-      throw new Error("Bad activeTextEditor");
-    }
 
-    return {
-      pwd: workspaceFolders[0].uri.path,
-    };
-  };
   const { pwd } = pluckMandatorVsCodeAttrsOrThrow(vscode);
 
   // Activate.
@@ -120,12 +190,43 @@ export async function activate(context: vscode.ExtensionContext) {
     "seso-refactors.helloWorld",
     async () => {
       console.time();
+      // return vscode.window.withProgress(
+      //   {
+      //     location: vscode.ProgressLocation.Notification,
+      //     title: "Doing Stuff...",
+      //   },
+      //   async (progress) => {
+      //             progress.report(`${++done}/${total}`);
+      //   }
+      // );
       try {
         taskLock = 1;
-        console.log("Waiting for tasks to complete...");
-        await clearJobTaskQueue(taskQueue);
-        taskQueue = [];
-        const destinationDomainChain = (await vscode.window.showInputBox({
+        await clearJobTaskQueueAndReset();
+        const formatCodeSettings =
+          project.manipulationSettings.getFormatCodeSettings();
+        const userPreferences =
+          project.manipulationSettings.getUserPreferences();
+        const languageService = project.getLanguageService();
+        const activeTextEditor = vscode.window.activeTextEditor;
+        if (!activeTextEditor) {
+          throw new Error("No active editor");
+        }
+        const selection = activeTextEditor.selection;
+        const filePath = activeTextEditor.document.fileName;
+        const selectionStart = selection.start;
+        const document = activeTextEditor.document;
+        const offset = document.offsetAt(selectionStart);
+        const sourceFile = project.getSourceFileOrThrow(filePath);
+        const nodeAtCursor = getDescendantAtPosOrThrow(sourceFile, offset);
+        // buildDestinationDomainPathSuggested
+        console.log("nodeAtCursor.getText()");
+        const focusedNodeText = nodeAtCursor.getText();
+        const placeHolder = buildDestinationDomainPathSuggested({
+          cwf: filePath,
+          nodeText: focusedNodeText,
+        });
+        console.log({ filePath, focusedNodeText, placeHolder });
+        const _proposedTypeReferenceChain = (await vscode.window.showInputBox({
           ignoreFocusOut: true,
           prompt: "Provide the complete domain path for your new provider",
           title: "TSeso.TD Domain Path",
@@ -134,10 +235,10 @@ export async function activate(context: vscode.ExtensionContext) {
             const startsWithTSesoPrefix = v.startsWith(tsesoPrefix);
             const isNotTooDepp = v.split(".").length < 10;
             const endsRight =
-              v.endsWith("Domain.ValueObject") ||
-              v.endsWith("Domain.Entity") ||
-              v.endsWith("Application.DTO") ||
-              v.endsWith("Infrastructure.Schema");
+              v.includes("Domain.ValueObject") ||
+              v.includes("Domain.Entity") ||
+              v.includes("Application.DTO") ||
+              v.includes("Infrastructure.Schema");
             if (!startsWithTSesoPrefix) {
               return "Must start with TSeso.TD.";
             }
@@ -158,85 +259,20 @@ export async function activate(context: vscode.ExtensionContext) {
             }
             return null;
           },
-          value: tsesoPrefix,
+          value: placeHolder,
         })) as string;
 
+        if (!_proposedTypeReferenceChain) {
+          throw new Error("Bad type reference chain");
+        }
+
         const constructedArgs = buildArgsFromDomainTypePath({
-          destinationDomainChain,
+          proposedTypeReferenceChain: _proposedTypeReferenceChain,
           pwd,
         });
 
-        const formatFilePretty = (
-          sourceFile: SourceFile,
-          formSettings: FormatCodeSettings,
-          uprefs: UserPreferences
-        ) => {
-          sourceFile.fixUnusedIdentifiers(formSettings, uprefs);
-          sourceFile.fixMissingImports(formSettings, uprefs);
-          sourceFile.organizeImports(formSettings, uprefs);
-          // Todo: Somehow trigger file formatting
-          sourceFile.formatText(formSettings);
-        };
-
-        // This method is called when your extension is activated
-        // Your extension is activated the very first time the command is executed
-        const getTypesSingleDefintionNodeAndSourceFileOrThrow = (
-          languageService: LanguageService,
-          n: Node
-        ): {
-          node: Node;
-          sourceFile: SourceFile;
-          symbolNameAtDefintion: string;
-        } => {
-          console.log(
-            `DOING - getTypesSingleDefintionNodeAndSourceFileOrThrow for: ${n.getText()}. File: ${n
-              .getSourceFile()
-              .getFilePath()}`
-          );
-          console.timeLog();
-
-          const defintions = languageService.getDefinitions(n).map((nn) => ({
-            node: nn.getNode(),
-            sourceFile: nn.getSourceFile(),
-            symbolNameAtDefintion: nn.getNode().getSymbolOrThrow().getName(),
-          }));
-          if (defintions.length > 1) {
-            throw new Error(
-              `Found more than one defintion, files: ${defintions
-                .map((d) => d.sourceFile.getSourceFile().getFilePath())
-                .join(",")}`
-            );
-          }
-          const d = defintions.pop();
-          if (!d) {
-            throw new Error("Didn't find a defintion node");
-          }
-          const symbolNameAtDefintion = d.symbolNameAtDefintion;
-          console.log(
-            `DONE - getTypesSingleDefintionNodeAndSourceFileOrThrow for: ${n.getText()}. File: ${n
-              .getSourceFile()
-              .getFilePath()}`
-          );
-          console.log(`symbolNameAtDefintion: ${symbolNameAtDefintion}`);
-          console.timeLog();
-          return d;
-        };
-
-        const getDescendantAtPosOrThrow = (
-          sourceFile: SourceFile,
-          pos: number
-        ) => {
-          const n = sourceFile.getDescendantAtPos(pos);
-          if (n) {
-            return n;
-          }
-          throw new Error(
-            `Could not find desc in file ${sourceFile.getFilePath()} at position ${pos}`
-          );
-        };
-
         const createTypeFilesIfNotExistOrAppendToExisting = (
-          project: Project,
+          p: Project,
           domainShapeConf: TExtensionParamsBlob
         ) => {
           domainShapeConf.pathsToFileContent.forEach((pathToContentObj) => {
@@ -244,59 +280,24 @@ export async function activate(context: vscode.ExtensionContext) {
               `Attempting to instantiate file: ${pathToContentObj.path}`
             );
             console.timeLog();
+            let sourceFileToProcess: SourceFile;
             try {
-              project.createSourceFile(
+              // Explodes if existing
+              sourceFileToProcess = p.createSourceFile(
                 pathToContentObj.path,
-                pathToContentObj.content,
-                {
-                  overwrite: false,
-                }
+                "",
+                { overwrite: false }
               );
             } catch (e: any) {
-              console.error(e);
+              // Explodes if unhappy
+              sourceFileToProcess = p.getSourceFileOrThrow(
+                pathToContentObj.path
+              );
             }
+            pathToContentObj.content(sourceFileToProcess);
           });
         };
-        console.log(
-          "DOING - project.manipulationSettings.getFormatCodeSettings();"
-        );
-        console.timeLog();
-        const formatCodeSettings =
-          project.manipulationSettings.getFormatCodeSettings();
-        console.log(
-          "DOING - project.manipulationSettings.getUserPreferences();"
-        );
-        console.timeLog();
-        const userPreferences =
-          project.manipulationSettings.getUserPreferences();
-        // Dunno what this does yet.
 
-        console.log("DOING - project.getLanguageService();");
-        console.timeLog();
-        const languageService = project.getLanguageService();
-
-        console.log("DOING - ctiveTextEditor.selection;");
-        console.timeLog();
-        const activeTextEditor = vscode.window.activeTextEditor;
-        if (!activeTextEditor) {
-          throw new Error("No active editor");
-        }
-        const selection = activeTextEditor.selection;
-        console.log("DOING - activeTextEditor.document.fileName;");
-        console.timeLog();
-        const filePath = activeTextEditor.document.fileName;
-        console.log("DOING - selection.start;");
-        console.timeLog();
-        const selectionStart = selection.start;
-        console.log("DOING - activeTextEditor.document;");
-        console.timeLog();
-        const document = activeTextEditor.document;
-        console.log("DOING - document.offsetAt(selectionStart);");
-        console.timeLog();
-        const offset = document.offsetAt(selectionStart);
-        console.log("DOING - project.getSourceFileOrThrow(filePath);");
-        console.timeLog();
-        const sourceFile = project.getSourceFileOrThrow(filePath);
         // Note: This is the cursor's position in the file - the number ts-morph needs.
         console.log("DOING - getDescendantAtPosOrThrow(sourceFile, offset); ");
         console.timeLog();
@@ -333,9 +334,12 @@ export async function activate(context: vscode.ExtensionContext) {
           trackedFiles: [] as SourceFile[],
         } as const;
 
-        console.log({
-          args,
-        });
+        console.dir(
+          {
+            args,
+          },
+          { depth: 100 }
+        );
 
         // Create domain files if not exist
         // Locate defintion node
@@ -371,7 +375,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const targetRefactorSourceFile =
           declarationNodeForDefintion.getSourceFile();
         const destinationRefactorSourceFile = project.getSourceFileOrThrow(
-          args.destinationFilePath
+          args.domainNameZetaSuperRootTypeDefinitionFilePath
         );
 
         console.log("Crawling the tree...");
@@ -401,39 +405,28 @@ export async function activate(context: vscode.ExtensionContext) {
                 parentKind,
                 parentText,
               });
-              if (parentKind === "TypeAliasDeclaration") {
-                // Shove the declaration in the destination file\
-                destinationRefactorSourceFile.addTypeAlias({
-                  isExported: true,
-                  ...parentNode
-                    .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
-                    .getStructure(),
-                });
-              }
+              switch (parentKind) {
+                case "TypeAliasDeclaration":
+                  destinationRefactorSourceFile.addTypeAlias({
+                    isExported: true,
+                    ...parentNode
+                      .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
+                      .getStructure(),
+                  });
 
-              if (parentKind === "ImportDeclaration") {
-                // Leave these alone, they git nixed by formatFilePretty
-                return;
+                  break;
+                case "ImportDeclaration":
+                  break;
+                case "TypeReference":
+                case "QualifiedName": {
+                  parentNode.replaceWithText(
+                    args.proposedTypeChainReferenceShort
+                  );
+                  break;
+                }
+                default:
+                  break;
               }
-              if (["TypeReference", "QualifiedName"].includes(parentKind)) {
-                parentNode.replaceWithText(
-                  `TSeso.TD.${args.destinationDomainChain}.${args.definitionName}`
-                );
-                return;
-              }
-
-              // console.log({
-              //   nodeFilePath,
-              //   nodeKind,
-              //   nodePos,
-              //   nodeText,
-              //   parentFilePath,
-              //   parentKind,
-              //   parentPos,
-              //   parentOfFirstNodeKindText,
-              //   parentText,
-              // });
-              console.log("ASDASD");
               console.timeLog();
               args.trackedFiles.push(currentSourceFile);
             });
@@ -484,8 +477,7 @@ export async function activate(context: vscode.ExtensionContext) {
         console.error(error);
       } finally {
         console.error("REFACTOR FINALLY BLOCK");
-        await clearJobTaskQueue(taskQueue);
-        taskQueue = [];
+        await clearJobTaskQueueAndReset();
         taskLock = 0;
         resetFileSystemWatchersToHandleKnownBugInVsCode();
         console.log("Done");

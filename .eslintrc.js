@@ -6,25 +6,12 @@ module.exports = {
     extends: [
         "plugin:import/typescript",
         "plugin:import/recommended",
-        "plugin:import/errors",
         "plugin:import/warnings",
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended", // Uses the recommended rules from the @typescript-eslint/eslint-plugin
         "plugin:prettier/recommended", // Enables eslint-plugin-prettier and eslint-config-prettier. This will display prettier errors as ESLint errors. Make sure this is always the last configuration in the extends array.
         "plugin:typescript-sort-keys/recommended", // Sort interface/type and string enum keys
     ],
-    globals: {
-        Cookies: "readonly",
-        FrameRequestCallback: "readonly",
-        JSX: "readonly",
-        NodeJS: "readonly",
-        Property: "readonly",
-        Proxy: "readonly",
-        React: "readonly",
-        RequestInit: "readonly",
-        TStrictOmit: "readonly",
-        TStrictPick: "readonly",
-    },
     ignorePatterns: [
         "./build/**.js",
         "./build/**.ts",
@@ -32,7 +19,18 @@ module.exports = {
         "/dist/**",
         "out",
         "build",
+        "out",
+        "dist",
+        "**/*.d.ts",
         "node_modules",
+    ],
+    overrides: [
+        {
+            files: ["./src/**/*"],
+            rules: {
+                "import/no-unresolved": "off",
+            },
+        },
     ],
     parser: "@typescript-eslint/parser",
     // Specifies the ESLint parser
@@ -46,9 +44,11 @@ module.exports = {
         sourceType: "module",
         tsconfigRootDir: "./",
     },
+
     plugins: [
         "fp",
         "import",
+        "@typescript-eslint",
         "sort-destructure-keys",
         "sort-exports",
         "sort-keys-fix",
@@ -174,7 +174,7 @@ module.exports = {
         "import/no-default-export": "error",
         "import/no-deprecated": "warn",
         "import/no-extraneous-dependencies": [
-            "error",
+            "warn",
             {
                 devDependencies: false,
                 optionalDependencies: false,
@@ -218,14 +218,13 @@ module.exports = {
         "no-magic-numbers": ["off"],
         "no-negated-condition": "error",
         "no-nested-ternary": "error",
-        "no-only-tests/no-only-tests": "error",
         "no-param-reassign": "error",
         "no-return-assign": "error",
         "no-return-await": "error",
         "no-sequences": "error",
         "no-throw-literal": "error",
         "no-trailing-spaces": "error",
-        "no-undef": "error",
+        "no-undef": "warn",
         "no-undef-init": "error",
         "no-unneeded-ternary": "error",
         "no-unreachable": "error",
@@ -274,4 +273,4 @@ module.exports = {
             },
         },
     },
-};
+}
