@@ -60,6 +60,7 @@ export type TExtensionParamsBlob = {
   domainNameZetaSuperRootTypeDefinitionFilePath: string;
   domainShapeConfig: TDomainShapeConfig;
   pathsToFileContent: TPathsToFileContent;
+  proposedTypeChainReferenceIdentifierName: string;
   proposedTypeChainReferenceLong: string;
   proposedTypeChainReferenceShort: string;
   topLevelNamespace: string;
@@ -111,6 +112,9 @@ export const buildArgsFromDomainTypePath = ({
       .split(".")
       .filter(Boolean)
       .join(".")
+  );
+  const proposedTypeChainReferenceIdentifierName = String(
+    proposedTypeChainReferenceShort.split(".").pop()
   );
   const domainNameAlphaBarrelExportRootDirPath = path.join(
     pwd,
@@ -555,6 +559,7 @@ export const buildArgsFromDomainTypePath = ({
     domainNameZetaSuperRootTypeDefinitionFilePath,
     domainShapeConfig,
     pathsToFileContent,
+    proposedTypeChainReferenceIdentifierName,
     proposedTypeChainReferenceLong: _proposedTypeReferenceChain,
     proposedTypeChainReferenceShort,
     topLevelNamespace,
@@ -598,13 +603,13 @@ export function buildDestinationDomainPathSuggested(p: {
 }
 // Testy
 // $ tsc src/buildArgsFromDomainTypePath.ts  && node src/buildArgsFromDomainTypePath.js && rm src/buildArgsFromDomainTypePath.js
-console.dir(
-  buildArgsFromDomainTypePath({
-    proposedTypeReferenceChain:
-      // "TSeso.TD.Alpha.Domain.ValueObject.TCreateDocumentDTO",
-      "TSeso.TD.Shared.Media.Application.DTO.TCreateDocumentDTO",
-    // "TSeso.TD.Alpha.Application.DTO.TCreateDocumentDTO",
-    pwd: "/Users/willdembinski/projects/seso-app",
-  }),
-  { depth: 100 }
-);
+// console.dir(
+//   buildArgsFromDomainTypePath({
+//     proposedTypeReferenceChain:
+//       // "TSeso.TD.Alpha.Domain.ValueObject.TCreateDocumentDTO",
+//       "TSeso.TD.Shared.Media.Application.DTO.TCreateDocumentDTO",
+//     // "TSeso.TD.Alpha.Application.DTO.TCreateDocumentDTO",
+//     pwd: "/Users/willdembinski/projects/seso-app",
+//   }),
+//   { depth: 100 }
+// );

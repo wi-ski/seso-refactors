@@ -14,6 +14,7 @@ import type {
   LanguageService,
   Node,
   SourceFile,
+  TypeAliasDeclaration,
   UserPreferences,
 } from "ts-morph";
 
@@ -42,7 +43,7 @@ const formatFilePretty = (
   formSettings: FormatCodeSettings,
   uprefs: UserPreferences
 ) => {
-  sf.fixUnusedIdentifiers(formSettings, uprefs);
+  // sf.fixUnusedIdentifiers(formSettings, uprefs);
   sf.fixMissingImports(formSettings, uprefs);
   sf.organizeImports(formSettings, uprefs);
   // Todo: Somehow trigger editor file formatting
@@ -92,7 +93,29 @@ const getTypesSingleDefintionNodeAndSourceFileOrThrow = (
   console.timeLog();
   return d;
 };
-type TTask = () => Promise<any>;
+
+const createTypeFilesIfNotExistOrAppendToExisting = (
+  p: Project,
+  domainShapeConf: TExtensionParamsBlob
+) => {
+  domainShapeConf.pathsToFileContent.forEach((pathToContentObj) => {
+    console.log(`Attempting to instantiate file: ${pathToContentObj.path}`);
+    console.timeLog();
+    let sourceFileToProcess: SourceFile;
+    try {
+      // Explodes if existing
+      sourceFileToProcess = p.createSourceFile(pathToContentObj.path, "", {
+        overwrite: false,
+      });
+    } catch (e: unknown) {
+      // Explodes if unhappy
+      sourceFileToProcess = p.getSourceFileOrThrow(pathToContentObj.path);
+    }
+    pathToContentObj.content(sourceFileToProcess);
+  });
+};
+
+type TTask = () => Promise<unknown>;
 type TTaskQueue = TTask[];
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -132,7 +155,7 @@ export async function activate(context: vscode.ExtensionContext) {
     tsConfigFilePath: `${pwd}/tsconfig.json`,
   });
   const dirs = project.getRootDirectories();
-  const removeFileFromProject = (e: any) => {
+  const removeFileFromProject = (e: { path: string }) => {
     console.log("project.getSourceFileOrThrow(e.path).removeSourceFile()");
     console.log(e.path);
     const sf = project.getSourceFile(e.path);
@@ -143,7 +166,7 @@ export async function activate(context: vscode.ExtensionContext) {
       `(Ignoring file system event REMOVE) Attempted to remove untrack SourceFile: ${e.path}`
     );
   };
-  const addFileToProject = (e: any) => {
+  const addFileToProject = (e: { path: string }) => {
     console.log("project.getSourceFileOrThrow(e.path).addSourceFileAtPath()");
     console.log(e.path);
     const sf = project.getSourceFile(e.path);
@@ -156,7 +179,7 @@ export async function activate(context: vscode.ExtensionContext) {
       `(Ignoring file system event ADD) Attempted to add untrack SourceFile: ${e.path}`
     );
   };
-  const updateFileInProject = (e: any) => {
+  const updateFileInProject = (e: { path: string }) => {
     console.log("project.getSourceFileOrThrow(e.path).refreshFromFileSystem()");
     console.log(e.path);
     const sf = project.getSourceFile(e.path);
@@ -206,7 +229,6 @@ export async function activate(context: vscode.ExtensionContext) {
           project.manipulationSettings.getFormatCodeSettings();
         const userPreferences =
           project.manipulationSettings.getUserPreferences();
-        const languageService = project.getLanguageService();
         const activeTextEditor = vscode.window.activeTextEditor;
         if (!activeTextEditor) {
           throw new Error("No active editor");
@@ -218,7 +240,6 @@ export async function activate(context: vscode.ExtensionContext) {
         const offset = document.offsetAt(selectionStart);
         const sourceFile = project.getSourceFileOrThrow(filePath);
         const nodeAtCursor = getDescendantAtPosOrThrow(sourceFile, offset);
-        // buildDestinationDomainPathSuggested
         console.log("nodeAtCursor.getText()");
         const focusedNodeText = nodeAtCursor.getText();
         const placeHolder = buildDestinationDomainPathSuggested({
@@ -271,33 +292,6 @@ export async function activate(context: vscode.ExtensionContext) {
           pwd,
         });
 
-        const createTypeFilesIfNotExistOrAppendToExisting = (
-          p: Project,
-          domainShapeConf: TExtensionParamsBlob
-        ) => {
-          domainShapeConf.pathsToFileContent.forEach((pathToContentObj) => {
-            console.log(
-              `Attempting to instantiate file: ${pathToContentObj.path}`
-            );
-            console.timeLog();
-            let sourceFileToProcess: SourceFile;
-            try {
-              // Explodes if existing
-              sourceFileToProcess = p.createSourceFile(
-                pathToContentObj.path,
-                "",
-                { overwrite: false }
-              );
-            } catch (e: any) {
-              // Explodes if unhappy
-              sourceFileToProcess = p.getSourceFileOrThrow(
-                pathToContentObj.path
-              );
-            }
-            pathToContentObj.content(sourceFileToProcess);
-          });
-        };
-
         // Note: This is the cursor's position in the file - the number ts-morph needs.
         console.log("DOING - getDescendantAtPosOrThrow(sourceFile, offset); ");
         console.timeLog();
@@ -308,6 +302,8 @@ export async function activate(context: vscode.ExtensionContext) {
           selectionStart,
           targetNode: targetNode.getText(),
         });
+
+        const languageService = project.getLanguageService();
         const onlyDefintionNodeForSelectedNode =
           getTypesSingleDefintionNodeAndSourceFileOrThrow(
             languageService,
@@ -357,97 +353,99 @@ export async function activate(context: vscode.ExtensionContext) {
         if (!initialNodeAtCursorPositionToFindDeclarationOf) {
           throw new Error("Bad initialNodeAtCursorPositionToFindDeclarationOf");
         }
-        const defintions = languageService.getDefinitions(
+        const definitions = languageService.getDefinitions(
           initialNodeAtCursorPositionToFindDeclarationOf
         );
-        const declarationNodeForDefintion = defintions[0].getDeclarationNode();
         // Only handling if has single defintion currently.
-        if (defintions.length > 1) {
-          throw new Error("Bad declarationNodeForDefintion length");
+        if (definitions.length > 1) {
+          throw new Error("Too many defintions found");
         }
+        const declarationNodeForDefintion = definitions[0].getDeclarationNode();
         if (!declarationNodeForDefintion) {
           throw new Error("Bad declarationNodeForDefintion");
         }
-
-        const targetRefactorSourceFile =
-          declarationNodeForDefintion.getSourceFile();
         const destinationRefactorSourceFile = project.getSourceFileOrThrow(
           args.domainNameZetaSuperRootTypeDefinitionFilePath
         );
 
         console.log("Crawling the tree...");
+        console.log("Looking for references to:");
+        console.log(declarationNodeForDefintion.getText());
         console.timeLog();
         const referencesToDeclarationNodeToIterateAndMaybeReplace =
-          languageService.findReferences(declarationNodeForDefintion);
+          languageService.findReferencesAsNodes(declarationNodeForDefintion);
         referencesToDeclarationNodeToIterateAndMaybeReplace.forEach(
           (declarationNodeReference) => {
             declarationNodeReference.getReferences().forEach((dd) => {
-              const currentSourceFile = dd.getSourceFile();
-              const n = dd.getNode();
-              const parentNode = n.getParentOrThrow();
-              // const parentOfFirstNodeKind = dd.getNode().getParentIfKind(SyntaxKind.FirstNode);
-              // const nodeFilePath=n.getSourceFile().getFilePath();
-              // const nodeKind=n.getKindName();
-              // const nodeText=n.getText();
-              // const nodePos=n.getPos();
-              // const parentFilePath=parentNode.getSourceFile().getFilePath();
+              const focusedSourceFile = dd.getSourceFile();
+              console.log("focusedSourceFile TEXT");
+              console.log(focusedSourceFile.getText());
+              const focusedNode = dd.getNode();
+              const parentNode = focusedNode.getParentOrThrow();
               const parentKind = parentNode.getKindName();
-              // const parentPos=parentNode.getPos();
-              // const parentOfFirstNodeKindText=parentOfFirstNodeKind?.getText();
               const parentText = parentNode.getText();
               console.log({
-                nodKind: n.getKindName(),
-                nodeFilePath: currentSourceFile.getFilePath(),
-                nodeText: n.getText(),
+                destinationRefactorSourceFile:
+                  destinationRefactorSourceFile.getFilePath(),
+                nodeFilePath: focusedSourceFile.getFilePath(),
+                nodeKind: focusedNode.getKindName(),
+                // nodePOS: focusedNode.getPos(),
+                // nodeText: focusedNode.getText(),
                 parentKind,
+                // parentNodePOS: parentNode.getPos(),
                 parentText,
+                sourceFileSaved: focusedSourceFile.isSaved(),
               });
               switch (parentKind) {
-                case "TypeAliasDeclaration":
-                  destinationRefactorSourceFile.addTypeAlias({
-                    isExported: true,
+                case "TypeAliasDeclaration": {
+                  const structure = {
                     ...parentNode
                       .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
                       .getStructure(),
+                    isExported: true,
+                    name: args.proposedTypeChainReferenceIdentifierName,
+                  };
+                  destinationRefactorSourceFile.addTypeAlias(structure);
+                  // focusedSourceFile.remove
+                  parentNode.replaceWithText("");
+                  // nodesToRemove.push(
+                  //   parentNode.asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
+                  // );
+                  break;
+                }
+                case "FirstNode":
+                case "TypeReference": {
+                  console.log({
+                    ReplacingText: 1,
+                    parentNodeNext: parentNode.getFullText(),
+                    parentNodePOS: parentNode.getPos(),
+                    proposedTypeChainReferenceLong:
+                      args.proposedTypeChainReferenceLong,
                   });
-
-                  break;
-                case "ImportDeclaration":
-                  break;
-                case "TypeReference":
-                case "QualifiedName": {
                   parentNode.replaceWithText(
                     args.proposedTypeChainReferenceLong
                   );
                   break;
                 }
+                case "QualifiedName":
+                case "Identifier":
+                case "ImportDeclaration":
+                case "Parameter":
+                case "ImportSpecifier":
+                  console.error("Ignoring parent kind");
+                  console.error(parentKind);
+                  break;
                 default:
+                  console.error("UNHANDLED parentKind");
+                  console.error(parentKind);
                   break;
               }
               console.timeLog();
-              args.trackedFiles.push(currentSourceFile);
+              args.trackedFiles.push(focusedSourceFile);
             });
           }
         );
-        console.log("Doing - Removing TypeAliasDeclaration");
-        console.timeLog();
-        console.log({
-          declarationNodeForDefintiongetFilePath: declarationNodeForDefintion
-            .getSourceFile()
-            .getFilePath(),
-          declarationNodeForDefintiongetFileText: declarationNodeForDefintion
-            .getSourceFile()
-            .getText(),
-          declarationNodeForDefintiongetText:
-            declarationNodeForDefintion.getText(),
-        });
-        declarationNodeForDefintion
-          .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
-          .remove();
-        console.log("DONE - Removing TypeAliasDeclaration");
-        console.timeLog();
-        args.trackedFiles.push(targetRefactorSourceFile);
-        args.trackedFiles.push(destinationRefactorSourceFile);
+        // nodesToRemove.forEach((n) => n.remove());
         console.log("Doing - Formatting files");
         console.timeLog();
         args.trackedFiles.forEach((f) =>
