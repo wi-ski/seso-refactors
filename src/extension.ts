@@ -334,12 +334,9 @@ export async function activate(context: vscode.ExtensionContext) {
           trackedFiles: [] as SourceFile[],
         } as const;
 
-        console.dir(
-          {
-            args,
-          },
-          { depth: 100 }
-        );
+        console.log({
+          args,
+        });
 
         // Create domain files if not exist
         // Locate defintion node
@@ -420,7 +417,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 case "TypeReference":
                 case "QualifiedName": {
                   parentNode.replaceWithText(
-                    args.proposedTypeChainReferenceShort
+                    args.proposedTypeChainReferenceLong
                   );
                   break;
                 }
@@ -461,9 +458,9 @@ export async function activate(context: vscode.ExtensionContext) {
         console.log("Doing - Saving files");
         console.timeLog();
         await project.save();
-        await Promise.all(
-          args.trackedFiles.map((f) => f.refreshFromFileSystem())
-        );
+        // await Promise.all(
+        //   args.trackedFiles.map((f) => f.refreshFromFileSystem())
+        // );
         console.log("Doing - Saving files");
         console.timeLog();
         console.log("Refreshing files...");
@@ -479,7 +476,7 @@ export async function activate(context: vscode.ExtensionContext) {
         console.error("REFACTOR FINALLY BLOCK");
         await clearJobTaskQueueAndReset();
         taskLock = 0;
-        resetFileSystemWatchersToHandleKnownBugInVsCode();
+        // resetFileSystemWatchersToHandleKnownBugInVsCode();
         console.log("Done");
         console.timeEnd();
       }
