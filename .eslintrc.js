@@ -181,7 +181,6 @@ module.exports = {
                 peerDependencies: false,
             },
         ],
-        "import/no-internal-modules": "error",
         "import/order": [
             "error",
             {

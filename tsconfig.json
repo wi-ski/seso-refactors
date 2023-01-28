@@ -1,9 +1,24 @@
 {
+	"baseUrl": "./",
+	"paths": {
+		"@/ddd/*": [
+			"./src/test/test-project/ddd/*"
+		],
+		"@/ddd": [
+			"./src/test/test-project/ddd"
+		],
+		"@/lib/*": [
+			"./src/test/test-project/lib/*"
+		],
+		"@/lib": [
+			"./src/test/test-project/lib"
+		]
+	},
 	"include": [
-		"./src/**/*.ts"
+		"./src/**/*.ts",
 	],
 	"exclude": [
-		"./src/test/**/*.ts"
+		"node_modules",
 	],
 	"compilerOptions": {
 		"module": "commonjs",
@@ -14,7 +29,6 @@
 		],
 		"sourceMap": true,
 		"rootDir": "src",
-		"strict": true, /* enable all strict type-checking options */
 		/* Additional Checks */
 		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */

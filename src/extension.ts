@@ -10,12 +10,11 @@ import {
 
 import type { TExtensionParamsBlob } from "./helpers";
 import type {
-  FormatCodeSettings,
+  // FormatCodeSettings,
   LanguageService,
   Node,
   SourceFile,
-  TypeAliasDeclaration,
-  UserPreferences,
+  // UserPreferences,
 } from "ts-morph";
 
 const pluckMandatorVsCodeAttrsOrThrow = (vscodeLibRef: typeof vscode) => {
@@ -38,18 +37,18 @@ const getDescendantAtPosOrThrow = (sf: SourceFile, pos: number) => {
   throw new Error("Could not find childAtPos");
 };
 
-const formatFilePretty = (
-  sf: SourceFile,
-  formSettings: FormatCodeSettings,
-  uprefs: UserPreferences
-) => {
-  // sf.fixUnusedIdentifiers(formSettings, uprefs);
-  sf.fixMissingImports(formSettings, uprefs);
-  sf.organizeImports(formSettings, uprefs);
-  // Todo: Somehow trigger editor file formatting
-  sf.formatText(formSettings);
-};
-const tsesoPrefix = "TSeso.TD.";
+// const formatFilePretty = (
+//   sf: SourceFile,
+//   formSettings: FormatCodeSettings,
+//   uprefs: UserPreferences
+// ) => {
+//   sf.fixUnusedIdentifiers(formSettings, uprefs);
+//   sf.fixMissingImports(formSettings, uprefs);
+//   sf.organizeImports(formSettings, uprefs);
+//   // Todo: Somehow trigger editor file formatting
+//   sf.formatText(formSettings);
+// };
+const tsesoPrefix = "TSeso.DDD.";
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 const getTypesSingleDefintionNodeAndSourceFileOrThrow = (
@@ -94,6 +93,133 @@ const getTypesSingleDefintionNodeAndSourceFileOrThrow = (
   return d;
 };
 
+const moveDeclarationToDestinationAndUpdateReferences = ({
+  destinationSourceFilePath,
+  initialNodeAtCursorPositionToFindDeclarationOf,
+  languageService,
+  project,
+  proposedTypeChainReferenceIdentifierName,
+  proposedTypeChainReferenceLong,
+}: {
+  destinationSourceFilePath: string;
+  initialNodeAtCursorPositionToFindDeclarationOf: Node;
+  languageService: LanguageService;
+  project: Project;
+  proposedTypeChainReferenceIdentifierName: string;
+  proposedTypeChainReferenceLong: string;
+}) => {
+  // const formatCodeSettings =
+  //   project.manipulationSettings.getFormatCodeSettings();
+  // const userPreferences = project.manipulationSettings.getUserPreferences();
+
+  if (!initialNodeAtCursorPositionToFindDeclarationOf) {
+    throw new Error("Bad initialNodeAtCursorPositionToFindDeclarationOf");
+  }
+  const definitions = languageService.getDefinitions(
+    initialNodeAtCursorPositionToFindDeclarationOf
+  );
+  // Only handling if has single defintion currently.
+  if (definitions.length > 1) {
+    throw new Error("Too many defintions found");
+  }
+  const declarationNodeForDefintion = definitions[0].getDeclarationNode();
+  if (!declarationNodeForDefintion) {
+    throw new Error("Bad declarationNodeForDefintion");
+  }
+  const destinationRefactorSourceFile = project.getSourceFileOrThrow(
+    destinationSourceFilePath
+  );
+
+  console.log("Crawling the tree...");
+  console.log("Looking for references to:");
+  console.log(declarationNodeForDefintion.getText());
+  console.timeLog();
+  const referenceNodes = languageService.findReferencesAsNodes(
+    declarationNodeForDefintion
+  );
+  referenceNodes.forEach((focusedNode) => {
+    const focusedSourceFile = focusedNode.getSourceFile();
+    console.log("focusedSourceFile TEXT");
+    console.log(focusedSourceFile.getText());
+    const parentNode = focusedNode.getParentOrThrow();
+    const parentKind = parentNode.getKindName();
+    const parentText = parentNode.getText();
+    const focusedNodeTextAtPost = focusedSourceFile
+      .getDescendantAtPos(focusedNode.getPos())
+      ?.getText();
+    const parentNodeTextAtPos = focusedSourceFile
+      .getDescendantAtPos(parentNode.getPos())
+      ?.getText();
+    console.log({
+      destinationRefactorSourceFile:
+        destinationRefactorSourceFile.getFilePath(),
+      focusedNodeTextAtPost,
+      nodeFilePath: focusedSourceFile.getFilePath(),
+      nodeKind: focusedNode.getKindName(),
+      nodePOS: focusedNode.getPos(),
+      nodeText: focusedNode.getText(),
+      parentKind,
+      parentNodePOS: parentNode.getPos(),
+      parentNodeTextAtPos,
+      parentText,
+      sourceFileSaved: focusedSourceFile.isSaved(),
+    });
+    switch (parentKind) {
+      case "TypeAliasDeclaration": {
+        // Leave as-is.
+        break;
+      }
+      case "FirstNode":
+      case "QualifiedName":
+        console.log({
+          ReplacingTextQualifiedName: 1,
+          parentNodeNext: parentNode.getFullText(),
+          parentNodePOS: parentNode.getPos(),
+          proposedTypeChainReferenceLong,
+        });
+        parentNode
+          .asKindOrThrow(SyntaxKind.QualifiedName)
+          ?.replaceWithText(proposedTypeChainReferenceLong);
+        break;
+      case "TypeReference": {
+        console.log({
+          ReplacingTextTypeReference: 1,
+          parentNodeNext: parentNode.getFullText(),
+          parentNodePOS: parentNode.getPos(),
+          proposedTypeChainReferenceLong,
+        });
+        parentNode
+          .asKindOrThrow(SyntaxKind.TypeReference)
+          ?.replaceWithText(proposedTypeChainReferenceLong);
+        break;
+      }
+      case "Identifier":
+      case "ImportDeclaration":
+      case "Parameter":
+      case "ImportSpecifier":
+        console.error("Ignoring parent kind");
+        console.error(parentKind);
+        break;
+      default:
+        console.error("UNHANDLED parentKind");
+        console.error(parentKind);
+        break;
+    }
+  });
+  const structure = {
+    ...declarationNodeForDefintion
+      .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
+      .getStructure(),
+    isExported: true,
+    name: proposedTypeChainReferenceIdentifierName,
+  };
+  // Readme. For some reason - magical - we have to move/remove the declaration last.
+  destinationRefactorSourceFile.addTypeAlias(structure);
+  declarationNodeForDefintion
+    .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
+    ?.remove();
+};
+
 const createTypeFilesIfNotExistOrAppendToExisting = (
   p: Project,
   domainShapeConf: TExtensionParamsBlob
@@ -121,6 +247,17 @@ type TTaskQueue = TTask[];
 export async function activate(context: vscode.ExtensionContext) {
   let taskQueue: TTaskQueue = [];
   let taskLock = 0;
+  // Create domain files if not exist
+  // Locate defintion node
+  // Find declaration node
+  //    -> Add declaration node to targetDestinationRefactorSourceFile
+  //    -> Remove declaration node from targetRefactorSourceFile
+  // Find all references to declaration node
+  //    -> Remove import declarations (handled by removeUnusedImports)
+  //    -> Replace not-chained references with TSeso.namespaced.thing
+  //    -> Replace chained references with TSeso.namespaced.thing
+  // Add TSeso import if not exist
+  // Delete old imports
   async function clearJobTaskQueueAndReset() {
     taskLock = 1;
     try {
@@ -225,10 +362,7 @@ export async function activate(context: vscode.ExtensionContext) {
       try {
         taskLock = 1;
         await clearJobTaskQueueAndReset();
-        const formatCodeSettings =
-          project.manipulationSettings.getFormatCodeSettings();
-        const userPreferences =
-          project.manipulationSettings.getUserPreferences();
+
         const activeTextEditor = vscode.window.activeTextEditor;
         if (!activeTextEditor) {
           throw new Error("No active editor");
@@ -250,7 +384,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const _proposedTypeReferenceChain = (await vscode.window.showInputBox({
           ignoreFocusOut: true,
           prompt: "Provide the complete domain path for your new provider",
-          title: "TSeso.TD Domain Path",
+          title: "TSeso.DDD Domain Path",
           validateInput: (_v) => {
             const v = String(_v);
             const startsWithTSesoPrefix = v.startsWith(tsesoPrefix);
@@ -261,7 +395,7 @@ export async function activate(context: vscode.ExtensionContext) {
               v.includes("Application.DTO") ||
               v.includes("Infrastructure.Schema");
             if (!startsWithTSesoPrefix) {
-              return "Must start with TSeso.TD.";
+              return "Must start with TSeso.DDD.";
             }
             if (!isNotTooDepp) {
               return "Path too deep.";
@@ -296,27 +430,12 @@ export async function activate(context: vscode.ExtensionContext) {
         console.log("DOING - getDescendantAtPosOrThrow(sourceFile, offset); ");
         console.timeLog();
         const targetNode = getDescendantAtPosOrThrow(sourceFile, offset);
-        console.log({
-          SELECTING: 1,
-          offset,
-          selectionStart,
-          targetNode: targetNode.getText(),
-        });
-
         const languageService = project.getLanguageService();
         const onlyDefintionNodeForSelectedNode =
           getTypesSingleDefintionNodeAndSourceFileOrThrow(
             languageService,
             targetNode
           );
-        console.log({
-          getFilePath:
-            onlyDefintionNodeForSelectedNode.sourceFile.getFilePath(),
-          onlyDefintionNodeForSelectedNode:
-            onlyDefintionNodeForSelectedNode.node.getText(),
-          symbolNameAtDefintion:
-            onlyDefintionNodeForSelectedNode.symbolNameAtDefintion,
-        });
         const args = {
           ...constructedArgs,
           definitionName: onlyDefintionNodeForSelectedNode.node
@@ -324,148 +443,30 @@ export async function activate(context: vscode.ExtensionContext) {
             .getName(),
           focusedFilePath: filePath,
           onlyDefintionNodeForSelectedNode,
-          pwd,
           targetRefactoringSourceFile:
             onlyDefintionNodeForSelectedNode.sourceFile,
-          trackedFiles: [] as SourceFile[],
         } as const;
 
         console.log({
           args,
         });
 
-        // Create domain files if not exist
-        // Locate defintion node
-        // Find declaration node
-        //    -> Add declaration node to targetDestinationRefactorSourceFile
-        //    -> Remove declaration node from targetRefactorSourceFile
-        // Find all references to declaration node
-        //    -> Remove import declarations (handled by removeUnusedImports)
-        //    -> Replace not-chained references with TSeso.namespaced.thing
-        //    -> Replace chained references with TSeso.namespaced.thing
-        // Add TSeso import if not exist
-        // Delete old imports
-
         createTypeFilesIfNotExistOrAppendToExisting(project, args);
-
-        const initialNodeAtCursorPositionToFindDeclarationOf =
-          sourceFile.getDescendantAtPos(offset);
-        if (!initialNodeAtCursorPositionToFindDeclarationOf) {
-          throw new Error("Bad initialNodeAtCursorPositionToFindDeclarationOf");
-        }
-        const definitions = languageService.getDefinitions(
-          initialNodeAtCursorPositionToFindDeclarationOf
-        );
-        // Only handling if has single defintion currently.
-        if (definitions.length > 1) {
-          throw new Error("Too many defintions found");
-        }
-        const declarationNodeForDefintion = definitions[0].getDeclarationNode();
-        if (!declarationNodeForDefintion) {
-          throw new Error("Bad declarationNodeForDefintion");
-        }
-        const destinationRefactorSourceFile = project.getSourceFileOrThrow(
-          args.domainNameZetaSuperRootTypeDefinitionFilePath
-        );
-
-        console.log("Crawling the tree...");
-        console.log("Looking for references to:");
-        console.log(declarationNodeForDefintion.getText());
-        console.timeLog();
-        const referencesToDeclarationNodeToIterateAndMaybeReplace =
-          languageService.findReferencesAsNodes(declarationNodeForDefintion);
-        referencesToDeclarationNodeToIterateAndMaybeReplace.forEach(
-          (declarationNodeReference) => {
-            declarationNodeReference.getReferences().forEach((dd) => {
-              const focusedSourceFile = dd.getSourceFile();
-              console.log("focusedSourceFile TEXT");
-              console.log(focusedSourceFile.getText());
-              const focusedNode = dd.getNode();
-              const parentNode = focusedNode.getParentOrThrow();
-              const parentKind = parentNode.getKindName();
-              const parentText = parentNode.getText();
-              console.log({
-                destinationRefactorSourceFile:
-                  destinationRefactorSourceFile.getFilePath(),
-                nodeFilePath: focusedSourceFile.getFilePath(),
-                nodeKind: focusedNode.getKindName(),
-                // nodePOS: focusedNode.getPos(),
-                // nodeText: focusedNode.getText(),
-                parentKind,
-                // parentNodePOS: parentNode.getPos(),
-                parentText,
-                sourceFileSaved: focusedSourceFile.isSaved(),
-              });
-              switch (parentKind) {
-                case "TypeAliasDeclaration": {
-                  const structure = {
-                    ...parentNode
-                      .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
-                      .getStructure(),
-                    isExported: true,
-                    name: args.proposedTypeChainReferenceIdentifierName,
-                  };
-                  destinationRefactorSourceFile.addTypeAlias(structure);
-                  // focusedSourceFile.remove
-                  parentNode.replaceWithText("");
-                  // nodesToRemove.push(
-                  //   parentNode.asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
-                  // );
-                  break;
-                }
-                case "FirstNode":
-                case "TypeReference": {
-                  console.log({
-                    ReplacingText: 1,
-                    parentNodeNext: parentNode.getFullText(),
-                    parentNodePOS: parentNode.getPos(),
-                    proposedTypeChainReferenceLong:
-                      args.proposedTypeChainReferenceLong,
-                  });
-                  parentNode.replaceWithText(
-                    args.proposedTypeChainReferenceLong
-                  );
-                  break;
-                }
-                case "QualifiedName":
-                case "Identifier":
-                case "ImportDeclaration":
-                case "Parameter":
-                case "ImportSpecifier":
-                  console.error("Ignoring parent kind");
-                  console.error(parentKind);
-                  break;
-                default:
-                  console.error("UNHANDLED parentKind");
-                  console.error(parentKind);
-                  break;
-              }
-              console.timeLog();
-              args.trackedFiles.push(focusedSourceFile);
-            });
-          }
-        );
-        // nodesToRemove.forEach((n) => n.remove());
-        console.log("Doing - Formatting files");
-        console.timeLog();
-        args.trackedFiles.forEach((f) =>
-          formatFilePretty(f, formatCodeSettings, userPreferences)
-        );
-        console.log("Done - Formatting files");
-        console.timeLog();
+        moveDeclarationToDestinationAndUpdateReferences({
+          destinationSourceFilePath:
+            args.domainNameZetaSuperRootTypeDefinitionFilePath,
+          initialNodeAtCursorPositionToFindDeclarationOf: targetNode,
+          languageService,
+          project,
+          proposedTypeChainReferenceIdentifierName:
+            args.proposedTypeChainReferenceIdentifierName,
+          proposedTypeChainReferenceLong: args.proposedTypeChainReferenceLong,
+        });
         console.log("Doing - Saving files");
         console.timeLog();
         await project.save();
-        // await Promise.all(
-        //   args.trackedFiles.map((f) => f.refreshFromFileSystem())
-        // );
-        console.log("Doing - Saving files");
-        console.timeLog();
-        console.log("Refreshing files...");
-        // await Promise.all(args.trackedFiles.map(f => f.refreshFromFileSystem()));
-        console.log("Waiting for tasks...");
         await vscode.window.showInformationMessage(
-          `New Location: ${destinationRefactorSourceFile.getFilePath()}`
+          `New Location: ${args.domainNameZetaSuperRootTypeDefinitionFilePath}`
         );
       } catch (error) {
         console.error("REFACTOR CRASH");
@@ -474,7 +475,6 @@ export async function activate(context: vscode.ExtensionContext) {
         console.error("REFACTOR FINALLY BLOCK");
         await clearJobTaskQueueAndReset();
         taskLock = 0;
-        // resetFileSystemWatchersToHandleKnownBugInVsCode();
         console.log("Done");
         console.timeEnd();
       }
