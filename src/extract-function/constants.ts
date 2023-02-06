@@ -20,10 +20,7 @@ export type TDomainShapeConfig = {
   };
 };
 export type TDomainShapeConfigAlpha = {
-  [pathPart: string]:
-    | TDomainShapeConfigBeta
-    | TDomainShapeConfigGamma
-    | TSourceFileConfiguratorFn;
+  [pathPart: string]: TDomainShapeConfigBeta;
 };
 
 export type TDomainShapeConfigBeta = {
@@ -31,14 +28,13 @@ export type TDomainShapeConfigBeta = {
     | TDomainShapeConfig
     | TDomainShapeConfigGamma
     | TSourceFileConfiguratorFn;
-  index: TSourceFileConfiguratorFn;
 };
 
 export type TDomainShapeConfigGamma = {
   [pathPart: string]:
-    | TSourceFileConfiguratorFn
-    | { [pathPart: string]: TDomainShapeConfig | TSourceFileConfiguratorFn };
-  index: TSourceFileConfiguratorFn;
+    | TDomainShapeConfig
+    | TDomainShapeConfigGamma
+    | TSourceFileConfiguratorFn;
 };
 export type TExtractFunctionParams = {
   cursorPos: number;

@@ -120,9 +120,8 @@ export function buildPathsToFileContent(p: {
     pathsToYank,
     _almostDomainShapeConfig
   );
-  // @ts-expect-error - SS
+  // Note: Note used if gamma undefined
   const domainShapeGamma: TDomainShapeConfigGamma = {
-    // Nest the gamma
     index: providerTemplate.buildBarrelExportBetaDomainRoot,
     [p.gammaDomain]: almostDomainShapeConfig,
   };
@@ -131,11 +130,11 @@ export function buildPathsToFileContent(p: {
     [p.betaDomain]: p.gammaDomain ? domainShapeGamma : almostDomainShapeConfig,
   };
 
-  const domainShapeConfig: TDomainShapeConfigAlpha = {
+  const alphaDomainShapeConfig: TDomainShapeConfigAlpha = {
     [p.alphaDomain]: betaDomainConfig,
   };
 
-  console.dir({ domainShapeConfig }, { depth: 10 });
+  console.dir({ alphaDomainShapeConfig }, { depth: 10 });
   const pathsToFileContent: TPathsToFileContentObj[] = [];
   function runner(
     o: TDomainShapeConfig | TDomainShapeConfigAlpha | TDomainShapeConfigBeta,
@@ -156,6 +155,6 @@ export function buildPathsToFileContent(p: {
       });
     }
   }
-  runner(domainShapeConfig, []);
+  runner(alphaDomainShapeConfig, []);
   return pathsToFileContent;
 }
