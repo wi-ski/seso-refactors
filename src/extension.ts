@@ -177,6 +177,7 @@ const moveDeclarationToDestinationAndUpdateReferences = ({
           parentNodePOS: parentNode.getPos(),
           proposedTypeChainReferenceLong,
         });
+
         parentNode
           .asKindOrThrow(SyntaxKind.QualifiedName)
           ?.replaceWithText(proposedTypeChainReferenceLong);

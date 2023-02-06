@@ -1,4 +1,4 @@
-import type * as TSeso from "../../../../lib";
+import type * as TSeso from "../../../../../lib";
 
 export type TTestEntity = TSeso.TDDD.domain.TStrictEntity<{
   foo: "TTestEntity";

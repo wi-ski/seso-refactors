@@ -11,6 +11,6 @@ export const testValueObject: TSeso.TDDD.domain.TValueObject<
   TTestValueObjectSeed
 > = {
   create: (p) => {
-    return p as TTestValueObjectValue;
+    return { ...p, foo: "TTestValueObjectValue" } as TTestValueObjectValue;
   },
 };
