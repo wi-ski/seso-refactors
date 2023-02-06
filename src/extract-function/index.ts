@@ -84,16 +84,7 @@ export const extractFunction = async (p: TScriptArgs) => {
   }`;
   const finalParamBlobType = `{
 ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
-  switch (next.symbolFlags) {
-    case SymbolFlags.BlockScopedVariable:
-    case SymbolFlags.Property:
-      return `${acc}${next.identifierSymbolName}: ${next.symbolTypeAtLocationText},`;
-    default:
-      console.log(
-        `Excluding symbol type: ${next.symbolFlagsText}. Line text: ${next.identifierNodeLineText}`
-      );
-      return acc;
-  }
+  return `${acc}${next.identifierSymbolName}: ${next.symbolTypeAtLocationText},`;
 }, "")}
 }`;
   const finalFnBody = `
