@@ -6,13 +6,13 @@ export const buildBarrelExportDomainLayer: TSourceFileConfiguratorFn = (p) => {
   let exportStatement = "";
   switch (p.writeFileConfigs.refactorType) {
     case extractRefactorTypes.DOMAIN_ENTITY:
-      exportStatement = `export * as entity from "./entity"`;
+      exportStatement = `export * as entity from "./entity";`;
       break;
     case extractRefactorTypes.DOMAIN_SERVICE:
-      exportStatement = `export * as service from "./service"`;
+      exportStatement = `export * as service from "./service";`;
       break;
     case extractRefactorTypes.DOMAIN_VALUEOBJECT:
-      exportStatement = `export * as valueObject from "./valueObject"`;
+      exportStatement = `export * as valueObject from "./valueObject";`;
       break;
     default:
       throw new Error("Bad refactor type.");
