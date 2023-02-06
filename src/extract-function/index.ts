@@ -55,17 +55,29 @@ export const extractFunction = async (p: TScriptArgs) => {
     const keepSymbol =
       symbolFlagsWeKeep.includes(b.symbolFlags) &&
       b.identifierNodeText !== "$r" &&
+      // Skip property.access.moments
       !b.identifierNode.getParentIfKind(SyntaxKind.PropertyAccessExpression);
     if (keepSymbol) {
       console.log(`Keeping symbol: ${b.identifierNodeText}`);
-      console.log(b);
       console.log(`Is type: ${b.symbolFlagsText}`);
       console.log(`Full Line: ${b.identifierNodeLineText}`);
+      console.log(
+        `Property acc: ${!b.identifierNode.getParentIfKind(
+          SyntaxKind.PropertyAccessExpression
+        )}`
+      );
+      console.log(b);
       return true;
     }
     console.warn(`Skipping symbol: ${b.identifierNodeText}`);
     console.warn(`Is type: ${b.symbolFlagsText}`);
     console.warn(`Full Line: ${b.identifierNodeLineText}`);
+    console.log(
+      `Property acc: ${!b.identifierNode.getParentIfKind(
+        SyntaxKind.PropertyAccessExpression
+      )}`
+    );
+    console.log(b);
 
     return false;
   });
