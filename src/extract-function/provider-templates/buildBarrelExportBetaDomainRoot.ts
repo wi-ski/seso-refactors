@@ -20,6 +20,7 @@ export const buildBarrelExportBetaDomainRoot: TSourceFileConfiguratorFn = (
       return;
     }
     p.sourcefileConfig.sourceFile.addStatements(exportStatement);
+  } else {
+    return buildBarrelExportDomainRoot(p);
   }
-  return buildBarrelExportDomainRoot(p);
 };
