@@ -122,7 +122,7 @@ const moveDeclarationToDestinationAndUpdateReferences = ({
   if (definitions.length > 1) {
     throw new Error("Too many defintions found");
   }
-  const definitionNodeForDefintion = definitions[0].getdefinitionNode();
+  const definitionNodeForDefintion = definitions[0].getDeclarationNode();
   if (!definitionNodeForDefintion) {
     throw new Error("Bad definitionNodeForDefintion");
   }
