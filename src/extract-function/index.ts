@@ -40,6 +40,7 @@ export const extractFunction = async (p: TScriptArgs) => {
 
   const symbolFlagsWeKeep = [
     SymbolFlags.BlockScopedVariable,
+    SymbolFlags.Property,
     SymbolFlags.FunctionScopedVariable,
     SymbolFlags.AliasExcludes,
     SymbolFlags.TypeAlias,
@@ -52,16 +53,19 @@ export const extractFunction = async (p: TScriptArgs) => {
     return buildSymbolBundle(i);
   });
   const filteredSymbolBundles = allSymbolBundles.filter((b) => {
-    const keepSymbol = symbolFlagsWeKeep.includes(b.symbolFlags);
+    const keepSymbol =
+      symbolFlagsWeKeep.includes(b.symbolFlags) &&
+      b.identifierNodeText !== "$r"; // Hack.
     if (keepSymbol) {
-      console.log(`Keeping symbol: ${b.symbbolTypeText}`);
+      console.log(`Keeping symbol: ${b.identifierNodeText}`);
+      console.log(b);
       console.log(`Is type: ${b.symbolFlagsText}`);
       console.log(`Full Line: ${b.identiferNodeLineText}`);
       return true;
     }
-    // console.log(`Skipping symbol: ${b.symbbolTypeText}`);
-    // console.log(`Is type: ${b.symbolFlagsText}`);
-    // console.log(`Full Line: ${b.identiferNodeLineText}`);
+    console.warn(`Skipping symbol: ${b.identifierNodeText}`);
+    console.warn(`Is type: ${b.symbolFlagsText}`);
+    console.warn(`Full Line: ${b.identiferNodeLineText}`);
 
     return false;
   });

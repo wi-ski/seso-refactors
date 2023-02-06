@@ -110,6 +110,7 @@ export class TSMorphWatcher {
     if (this.eventQueue.length === 1) {
       this.signal.notify();
     }
+    setTimeout(() => this.getNext(), 100);
   }
 
   private async start() {
