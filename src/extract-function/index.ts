@@ -100,16 +100,36 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
         isFreshFile: !_sf,
         sourceFile: sf,
       };
-      return { ...o, content: o.content({ sourcefileConfig, templateParams }) };
+      return {
+        ...o,
+        content: o.content({
+          sourcefileConfig,
+          templateParams,
+          writeFileConfigs,
+        }),
+      };
     }
   );
   console.dir({ pathsToFileContent }, { depth: 10 });
+  return project.save();
 };
 // Testy
 // Testy
 // Testy
 const providerIdentifierPath =
   "BetaDomain.GammaDomain.domain.service.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.domain.valueObject.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.domain.entity.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.application.service.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.application.useCase.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.application.eventListener.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.infrastructure.service.providerName";
 const refactorType = (() => {
   if (providerIdentifierPath.includes("domain.service")) {
     return extractRefactorTypes.DOMAIN_SERVICE;
@@ -122,6 +142,9 @@ const refactorType = (() => {
   }
   if (providerIdentifierPath.includes("application.useCase")) {
     return extractRefactorTypes.APPLICATION_USECASE;
+  }
+  if (providerIdentifierPath.includes("application.eventListener")) {
+    return extractRefactorTypes.APPLICATION_EVENTLISTENER;
   }
   if (providerIdentifierPath.includes("application.service")) {
     return extractRefactorTypes.APPLICATION_SERVICE;

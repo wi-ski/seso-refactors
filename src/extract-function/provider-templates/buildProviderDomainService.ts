@@ -16,6 +16,5 @@ export const ${"TEMPLATE_PROVIDER_NAME"}: TSeso.TDDD.domain.TDomainService<${"TE
 };
 `;
 export const buildProviderDomainService: TSourceFileConfiguratorFn = (p) => {
-  p.sourcefileConfig.sourceFile.insertText(0, filler(p.templateParams));
-  p.sourcefileConfig.sourceFile.saveSync();
+  p.sourcefileConfig.sourceFile.addStatements(filler(p.templateParams));
 };

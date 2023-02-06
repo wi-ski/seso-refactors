@@ -48,6 +48,11 @@ export function buildPathsToFileContent(p: {
       ["application", "index"],
       ["application", "usecase"],
     ],
+    [extractRefactorTypes.APPLICATION_EVENTLISTENER]: [
+      ["index"],
+      ["application", "index"],
+      ["application", "eventListener"],
+    ],
     [extractRefactorTypes.DOMAIN_ENTITY]: [
       ["index"],
       ["domain", "index"],
@@ -122,7 +127,7 @@ export function buildPathsToFileContent(p: {
   const wouldBeGammDomainConfig: TDomainShapeConfigGamma = {
     [p.betaDomain]: {
       [p.gammaDomain]: almostDomainShapeConfig,
-      index: providerTemplate.buildBarrelExportGammDomainRoot,
+      index: providerTemplate.buildBarrelExportDomainRoot,
     },
     index: providerTemplate.buildBarrelExportBetaDomainRoot,
   };
