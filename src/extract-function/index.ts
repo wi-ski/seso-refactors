@@ -119,10 +119,10 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
 // Testy
 // const providerIdentifierPath =
 //   "BetaDomain.GammaDomain.domain.service.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.domain.valueObject.providerName";
 // const providerIdentifierPath =
-//   "BetaDomain.GammaDomain.domain.entity.providerName";
+//   "BetaDomain.GammaDomain.domain.valueObject.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.domain.entity.providerName";
 // const providerIdentifierPath =
 //   "BetaDomain.GammaDomain.application.service.providerName";
 // const providerIdentifierPath =
