@@ -65,17 +65,34 @@ export const buildSymbolBundle = (
       parentNode.getEndLineNumber() - 1
     ];
     const parentSymbol = parentNode.getSymbol();
-    const identifierSymbolName = parentSymbol.getName();
-    const declarationNode = parentSymbol.getDeclarations()[0];
+    const parentSymbolName = parentSymbol.getName();
+    const parentDeclarationNode = parentSymbol.getDeclarations()[0];
+    const parentDeclarationNodeText = parentDeclarationNode.getText();
+    const parentDeclarationNodePosStart = parentDeclarationNode.getStart();
+    const parentDeclarationNodePosEnd = parentDeclarationNode.getEnd();
+    const parentDeclarationSourceFilePath = parentDeclarationNode
+      .getSourceFile()
+      .getFilePath();
+    const parentDeclarationNodeLineText = parentDeclarationNode
+      .getSourceFile()
+      .getText()
+      .split("\n")[parentDeclarationNode.getEndLineNumber() - 1];
     console.log({
       declarationNode,
       identifierSymbolName,
+      parentDeclarationNodeLineText,
+      parentDeclarationNodePosEnd,
+      parentDeclarationNodePosStart,
+      parentDeclarationNodeText,
+      parentDeclarationSourceFilePath,
       parentNodeEnd,
       parentNodeKind,
       parentNodeLineText,
       parentNodeStart,
       parentNodeText,
+      parentSymbolName,
     });
+    throw new Error("");
   }
   const bundle = {
     declarationNodeLineText,
