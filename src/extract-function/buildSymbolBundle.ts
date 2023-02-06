@@ -8,10 +8,10 @@ type TSymbolNodeInfoBundle = {
   declarationNodePosStart: number;
   declarationNodeText: string;
   declarationSourceFilePath: string;
-  identiferNodeLineText: string;
-  identiferNodeSourceFilePath: string;
   identifierNodeEnd: number;
   identifierNodeKind: string;
+  identifierNodeLineText: string;
+  identifierNodeSourceFilePath: string;
   identifierNodeStart: number;
   identifierNodeText: string;
   identifierSymbolName: string;
@@ -22,20 +22,20 @@ type TSymbolNodeInfoBundle = {
 };
 
 export const buildSymbolBundle = (
-  identiferNode: Identifier
+  identifierNode: Identifier
 ): TSymbolNodeInfoBundle => {
-  const identiferNodeSourceFilePath = identiferNode
+  const identifierNodeSourceFilePath = identifierNode
     .getSourceFile()
     .getFilePath();
-  const identifierNodeText = identiferNode.getText();
-  const identifierNodeStart = identiferNode.getStart();
-  const identifierNodeEnd = identiferNode.getEnd();
-  const identifierNodeKind = identiferNode.getKindName();
-  const identiferNodeLineText = identiferNode
+  const identifierNodeText = identifierNode.getText();
+  const identifierNodeStart = identifierNode.getStart();
+  const identifierNodeEnd = identifierNode.getEnd();
+  const identifierNodeKind = identifierNode.getKindName();
+  const identifierNodeLineText = identifierNode
     .getSourceFile()
     .getText()
-    .split("\n")[identiferNode.getEndLineNumber() - 1];
-  const identifierSymbol = identiferNode.getSymbol();
+    .split("\n")[identifierNode.getEndLineNumber() - 1];
+  const identifierSymbol = identifierNode.getSymbol();
   const identifierSymbolName = identifierSymbol.getName();
   const declarationNode = identifierSymbol.getDeclarations()[0];
   const declarationNodeText = declarationNode.getText();
@@ -49,22 +49,44 @@ export const buildSymbolBundle = (
     .getText()
     .split("\n")[declarationNode.getEndLineNumber() - 1];
   const symbolTypeAtLocation =
-    identifierSymbol.getTypeAtLocation(identiferNode);
+    identifierSymbol.getTypeAtLocation(identifierNode);
   const symbolTypeAtLocationText = symbolTypeAtLocation.getText();
   const symbolType = identifierSymbol.getDeclaredType();
   const symbolFlags = identifierSymbol.getFlags();
   const symbolFlagsText = SymbolFlags[identifierSymbol.getFlags()];
   const symbbolTypeText = symbolType.getText();
+  if (identifierNodeText === "pp") {
+    const parentNode = identifierNode.getParent();
+    const parentNodeText = parentNode.getText();
+    const parentNodeStart = parentNode.getStart();
+    const parentNodeEnd = parentNode.getEnd();
+    const parentNodeKind = parentNode.getKindName();
+    const parentNodeLineText = parentNode.getSourceFile().getText().split("\n")[
+      parentNode.getEndLineNumber() - 1
+    ];
+    const parentSymbol = parentNode.getSymbol();
+    const identifierSymbolName = parentSymbol.getName();
+    const declarationNode = parentSymbol.getDeclarations()[0];
+    console.log({
+      declarationNode,
+      identifierSymbolName,
+      parentNodeEnd,
+      parentNodeKind,
+      parentNodeLineText,
+      parentNodeStart,
+      parentNodeText,
+    });
+  }
   const bundle = {
     declarationNodeLineText,
     declarationNodePosEnd,
     declarationNodePosStart,
     declarationNodeText,
     declarationSourceFilePath,
-    identiferNodeLineText,
-    identiferNodeSourceFilePath,
     identifierNodeEnd,
     identifierNodeKind,
+    identifierNodeLineText,
+    identifierNodeSourceFilePath,
     identifierNodeStart,
     identifierNodeText,
     identifierSymbolName,

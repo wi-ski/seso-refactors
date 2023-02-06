@@ -59,12 +59,12 @@ export const extractFunction = async (p: TScriptArgs) => {
       console.log(`Keeping symbol: ${b.identifierNodeText}`);
       console.log(b);
       console.log(`Is type: ${b.symbolFlagsText}`);
-      console.log(`Full Line: ${b.identiferNodeLineText}`);
+      console.log(`Full Line: ${b.identifierNodeLineText}`);
       return true;
     }
     console.warn(`Skipping symbol: ${b.identifierNodeText}`);
     console.warn(`Is type: ${b.symbolFlagsText}`);
-    console.warn(`Full Line: ${b.identiferNodeLineText}`);
+    console.warn(`Full Line: ${b.identifierNodeLineText}`);
 
     return false;
   });
@@ -89,7 +89,7 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
       return `${acc}${next.identifierSymbolName}: ${next.symbolTypeAtLocationText},`;
     default:
       console.log(
-        `Excluding symbol type: ${next.symbolFlagsText}. Line text: ${next.identiferNodeLineText}`
+        `Excluding symbol type: ${next.symbolFlagsText}. Line text: ${next.identifierNodeLineText}`
       );
       return acc;
   }
