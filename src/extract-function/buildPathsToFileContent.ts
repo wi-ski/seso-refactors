@@ -136,7 +136,6 @@ export function buildPathsToFileContent(p: {
 
   const domainShapeConfig: TDomainShapeConfigAlpha = {
     [p.alphaDomain]: wouldBeBetaDomainConfig,
-    index: providerTemplate.buildBarrelExportAlphaDomainRoot,
   };
 
   console.dir({ domainShapeConfig }, { depth: 10 });
