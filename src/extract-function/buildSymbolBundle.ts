@@ -35,9 +35,12 @@ export const buildSymbolBundle = (
     .getSourceFile()
     .getText()
     .split("\n")[identifierNode.getEndLineNumber() - 1];
+  // defintion stuff
+  const LANGSERVICE = identifierNode.getProject().getLanguageService();
+  const defintionNode = LANGSERVICE.getDefinitions(identifierNode)[0].getNode();
   const identifierSymbol = identifierNode.getSymbol();
   const identifierSymbolName = identifierSymbol.getName();
-  const declarationNode = identifierSymbol.getDeclarations()[0];
+  const declarationNode = defintionNode;
   const declarationNodeText = declarationNode.getText();
   const declarationNodePosStart = declarationNode.getStart();
   const declarationNodePosEnd = declarationNode.getEnd();
@@ -55,45 +58,7 @@ export const buildSymbolBundle = (
   const symbolFlags = identifierSymbol.getFlags();
   const symbolFlagsText = SymbolFlags[identifierSymbol.getFlags()];
   const symbbolTypeText = symbolType.getText();
-  if (identifierNodeText === "pp") {
-    const parentNode = identifierNode.getParent();
-    const parentNodeText = parentNode.getText();
-    const parentNodeStart = parentNode.getStart();
-    const parentNodeEnd = parentNode.getEnd();
-    const parentNodeKind = parentNode.getKindName();
-    const parentNodeLineText = parentNode.getSourceFile().getText().split("\n")[
-      parentNode.getEndLineNumber() - 1
-    ];
-    const parentSymbol = parentNode.getSymbol();
-    const parentSymbolName = parentSymbol.getName();
-    const parentDeclarationNode = parentSymbol.getDeclarations()[0];
-    const parentDeclarationNodeText = parentDeclarationNode.getText();
-    const parentDeclarationNodePosStart = parentDeclarationNode.getStart();
-    const parentDeclarationNodePosEnd = parentDeclarationNode.getEnd();
-    const parentDeclarationSourceFilePath = parentDeclarationNode
-      .getSourceFile()
-      .getFilePath();
-    const parentDeclarationNodeLineText = parentDeclarationNode
-      .getSourceFile()
-      .getText()
-      .split("\n")[parentDeclarationNode.getEndLineNumber() - 1];
-    console.log({
-      declarationNode,
-      identifierSymbolName,
-      parentDeclarationNodeLineText,
-      parentDeclarationNodePosEnd,
-      parentDeclarationNodePosStart,
-      parentDeclarationNodeText,
-      parentDeclarationSourceFilePath,
-      parentNodeEnd,
-      parentNodeKind,
-      parentNodeLineText,
-      parentNodeStart,
-      parentNodeText,
-      parentSymbolName,
-    });
-    throw new Error("");
-  }
+
   const bundle = {
     declarationNodeLineText,
     declarationNodePosEnd,
