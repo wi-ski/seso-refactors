@@ -21,6 +21,8 @@ export const buildBarrelExportBetaDomainRoot: TSourceFileConfiguratorFn = (
     }
     p.sourcefileConfig.sourceFile.addStatements(exportStatement);
   } else {
-    return buildBarrelExportDomainRoot(p);
+    throw new Error(
+      "Shouldnt get here - control flow is handled by shapes of contentObjs"
+    );
   }
 };
