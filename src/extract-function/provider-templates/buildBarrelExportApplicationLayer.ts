@@ -6,7 +6,7 @@ export const buildBarrelExportApplicationLayer: TSourceFileConfiguratorFn = (
   p
 ) => {
   let exportStatement = "";
-  switch (p.writeFileConfigs.refactorType) {
+  switch (p.argsContext.refactorType) {
     case extractRefactorTypes.APPLICATION_SERVICE:
       exportStatement = `export * as service from "./service";`;
       break;

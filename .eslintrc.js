@@ -80,24 +80,6 @@ module.exports = {
                 exceptAfterSingleLine: true,
             },
         ],
-        "@typescript-eslint/member-ordering": [
-            "error",
-            {
-                classes: {
-                    memberTypes: [
-                        "field",
-                        "constructor",
-                        "public-static-method",
-                        "protected-static-method",
-                        "private-static-method",
-                        "public-method",
-                        "protected-method",
-                        "private-method",
-                    ],
-                    order: "alphabetically",
-                },
-            },
-        ],
         "@typescript-eslint/naming-convention": [
             "error",
             {
@@ -132,7 +114,6 @@ module.exports = {
         "@typescript-eslint/no-namespace": "error",
         "@typescript-eslint/no-non-null-asserted-optional-chain": "error",
         "@typescript-eslint/no-non-null-assertion": "error",
-        "@typescript-eslint/no-parameter-properties": "error",
         "@typescript-eslint/no-shadow": "error",
         "@typescript-eslint/no-this-alias": "error",
         "@typescript-eslint/no-unused-vars": [
@@ -144,7 +125,6 @@ module.exports = {
                 varsIgnorePattern: "^_",
             },
         ],
-        "@typescript-eslint/no-use-before-define": "error",
         "@typescript-eslint/no-useless-constructor": "error",
         "@typescript-eslint/no-var-requires": "error",
         "@typescript-eslint/prefer-as-const": "error",

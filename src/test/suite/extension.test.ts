@@ -6,7 +6,7 @@
 
 // const pwd = "/Users/willdembinski/projects/seso-app";
 suite("buildArgsFromDomainTypePath Test Suite", () => {
-  vscode.window.showInformationMessage("Start all tests.");
+  // vscode.window.showInformationMessage("Start all tests.");
   test("Single Nested", () => {});
   test("Double Nested", () => {});
 });

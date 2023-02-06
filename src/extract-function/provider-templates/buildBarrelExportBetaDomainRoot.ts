@@ -1,12 +1,10 @@
-import { buildBarrelExportDomainRoot } from "./buildBarrelExportDomainRoot";
-
 import type { TSourceFileConfiguratorFn } from "../constants";
 
 export const buildBarrelExportBetaDomainRoot: TSourceFileConfiguratorFn = (
   p
 ) => {
-  if (p.writeFileConfigs.gammaDomain) {
-    const exportStatement = `export * as ${p.writeFileConfigs.gammaDomain} from "./${p.writeFileConfigs.gammaDomain}";`;
+  if (p.argsContext.gammaDomain) {
+    const exportStatement = `export * as ${p.argsContext.gammaDomain} from "./${p.argsContext.gammaDomain}";`;
     const statements = p.sourcefileConfig.sourceFile.getStatements();
 
     const containsExportAlready = statements.some((s) => {

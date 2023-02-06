@@ -1,5 +1,17 @@
-import type { SourceFile } from "ts-morph";
+import type { Project, SourceFile } from "ts-morph";
 
+export type TArgsContext = {
+  alphaDomain: string;
+  betaDomain: string;
+  cursorPos: number;
+  gammaDomain: string | null;
+  project: Project;
+  providerIdentifierPath: string;
+  providerName: string;
+  pwd: string;
+  refactorType: TExtractRefactorTypes;
+  targetFilePath: string;
+};
 export type TDomainShapeConfig = {
   application: {
     eventListener: TSourceFileConfiguratorObj;
@@ -19,6 +31,7 @@ export type TDomainShapeConfig = {
     service: TSourceFileConfiguratorObj;
   };
 };
+
 export type TDomainShapeConfigAlpha = {
   [pathPart: string]: TDomainShapeConfigBeta;
 };
@@ -29,17 +42,11 @@ export type TDomainShapeConfigBeta = {
     | TDomainShapeConfigGamma
     | TSourceFileConfiguratorFn;
 };
-
 export type TDomainShapeConfigGamma = {
   [pathPart: string]:
     | TDomainShapeConfig
     | TDomainShapeConfigGamma
     | TSourceFileConfiguratorFn;
-};
-export type TExtractFunctionParams = {
-  cursorPos: number;
-  targetFilePath: string;
-  writeFileConfigs: TWriteFileConfigs;
 };
 export type TExtractRefactorTypes = keyof typeof extractRefactorTypes;
 export type TPathsToFileContentObj = {
@@ -52,9 +59,9 @@ export type TSourceFileConfig = {
   sourceFile: SourceFile;
 };
 export type TSourceFileConfiguratorFn = (config: {
+  argsContext: TArgsContext;
   sourcefileConfig: TSourceFileConfig;
   templateParams: TTemplateParams;
-  writeFileConfigs: TWriteFileConfigs;
 }) => void;
 
 export type TSourceFileConfiguratorObj = Record<
@@ -69,16 +76,6 @@ export type TTemplateParams = {
   TEMPLATE_PROVIDER_NAME: string;
   TEMPLATE_RESPONSE_TYPE: string;
   TEMPLATE_RESPONSE_TYPE_NAME: string;
-};
-
-export type TWriteFileConfigs = {
-  alphaDomain: string;
-  betaDomain: string;
-  gammaDomain: string | null;
-  providerIdentifierPath: string;
-  providerName: string;
-  pwd: string;
-  refactorType: TExtractRefactorTypes;
 };
 
 export const extractRefactorTypes = {

@@ -4,7 +4,7 @@ import type { TSourceFileConfiguratorFn } from "../constants";
 
 export const buildBarrelExportDomainLayer: TSourceFileConfiguratorFn = (p) => {
   let exportStatement = "";
-  switch (p.writeFileConfigs.refactorType) {
+  switch (p.argsContext.refactorType) {
     case extractRefactorTypes.DOMAIN_ENTITY:
       exportStatement = `export * as entity from "./entity";`;
       break;

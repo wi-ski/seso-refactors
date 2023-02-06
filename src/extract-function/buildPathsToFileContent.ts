@@ -6,6 +6,7 @@ import { extractRefactorTypes } from "./constants";
 import * as providerTemplate from "./provider-templates";
 
 import type {
+  TArgsContext,
   TDomainShapeConfig,
   TDomainShapeConfigAlpha,
   TDomainShapeConfigBeta,
@@ -66,14 +67,9 @@ const extractRefactorTypesToYankPaths: Record<
     ["infrastructure", "service"],
   ],
 };
-export function buildPathsToFileContent(p: {
-  alphaDomain: string;
-  betaDomain: string;
-  gammaDomain: string;
-  providerName: string;
-  pwd: string;
-  refactorType: TExtractRefactorTypes;
-}): TPathsToFileContentObj[] {
+export function buildPathsToFileContent(
+  p: TArgsContext
+): TPathsToFileContentObj[] {
   const _almostDomainShapeConfig: TDomainShapeConfig = {
     application: {
       eventListener: {

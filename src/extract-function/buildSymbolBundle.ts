@@ -2,7 +2,28 @@ import { SymbolFlags } from "ts-morph";
 
 import type { Identifier } from "ts-morph";
 
-export const buildSymbolBundle = (identiferNode: Identifier) => {
+type TSymbolNodeInfoBundle = {
+  declarationNodeLineText: string;
+  declarationNodePosEnd: number;
+  declarationNodePosStart: number;
+  declarationNodeText: string;
+  declarationSourceFilePath: string;
+  identiferNodeLineText: string;
+  identiferNodeSourceFilePath: string;
+  identifierNodeEnd: number;
+  identifierNodeKind: string;
+  identifierNodeStart: number;
+  identifierNodeText: string;
+  identifierSymbolName: string;
+  symbbolTypeText: string;
+  symbolFlags: SymbolFlags;
+  symbolFlagsText: string;
+  symbolTypeAtLocationText: string;
+};
+
+export const buildSymbolBundle = (
+  identiferNode: Identifier
+): TSymbolNodeInfoBundle => {
   const identiferNodeSourceFilePath = identiferNode
     .getSourceFile()
     .getFilePath();
@@ -34,7 +55,7 @@ export const buildSymbolBundle = (identiferNode: Identifier) => {
   const symbolFlags = identifierSymbol.getFlags();
   const symbolFlagsText = SymbolFlags[identifierSymbol.getFlags()];
   const symbbolTypeText = symbolType.getText();
-  return {
+  const bundle = {
     declarationNodeLineText,
     declarationNodePosEnd,
     declarationNodePosStart,
@@ -52,4 +73,5 @@ export const buildSymbolBundle = (identiferNode: Identifier) => {
     symbolFlagsText,
     symbolTypeAtLocationText,
   };
+  return bundle;
 };

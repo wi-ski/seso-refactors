@@ -4,7 +4,7 @@ import type { TSourceFileConfiguratorFn } from "../constants";
 
 export const buildBarrelExportDomainRoot: TSourceFileConfiguratorFn = (p) => {
   let exportStatement = "";
-  switch (p.writeFileConfigs.refactorType) {
+  switch (p.argsContext.refactorType) {
     case extractRefactorTypes.APPLICATION_SERVICE:
     case extractRefactorTypes.APPLICATION_EVENTLISTENER:
     case extractRefactorTypes.APPLICATION_USECASE:
