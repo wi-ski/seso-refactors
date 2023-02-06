@@ -106,7 +106,7 @@ export function buildPathsToFileContent(p: {
       index: providerTemplate.buildBarrelExportInfrastructureLayer,
       service: {
         index: providerTemplate.buildBarrelExportProvider,
-        [p.providerName]: providerTemplate.buildProvicerInfrastructureService,
+        [p.providerName]: providerTemplate.buildProviderInfrastructureService,
       },
     },
   };

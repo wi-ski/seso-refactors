@@ -97,7 +97,7 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
       const _sf = project.getSourceFile(o.path);
       const sf = _sf || project.createSourceFile(o.path);
       const sourcefileConfig = {
-        isFreshFile: !!_sf,
+        isFreshFile: !_sf,
         sourceFile: sf,
       };
       return { ...o, content: o.content({ sourcefileConfig, templateParams }) };
@@ -105,6 +105,8 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
   );
   console.dir({ pathsToFileContent }, { depth: 10 });
 };
+// Testy
+// Testy
 // Testy
 const providerIdentifierPath =
   "BetaDomain.GammaDomain.domain.service.providerName";

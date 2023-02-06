@@ -2,6 +2,6 @@ import { templateFillerBuilder } from "./utils";
 
 import type { TSourceFileConfiguratorFn } from "../constants";
 
-export const buildProvicerInfrastructureService: TSourceFileConfiguratorFn = (
+export const buildProviderInfrastructureService: TSourceFileConfiguratorFn = (
   _p
 ) => {};
