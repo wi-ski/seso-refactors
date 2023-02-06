@@ -9,7 +9,6 @@ import type {
   TDomainShapeConfig,
   TDomainShapeConfigAlpha,
   TDomainShapeConfigBeta,
-  TDomainShapeConfigGamma,
   TExtractRefactorTypes,
   TPathsToFileContentObj,
 } from "./constants";
@@ -121,29 +120,26 @@ export function buildPathsToFileContent(p: {
     _almostDomainShapeConfig
   );
   const wouldBeBetaDomainConfig: TDomainShapeConfigBeta = {
-    [p.betaDomain]: almostDomainShapeConfig,
-    index: providerTemplate.buildBarrelExportBetaDomainRoot,
-  };
-  const wouldBeGammDomainConfig: TDomainShapeConfigGamma = {
-    [p.betaDomain]: {
-      [p.gammaDomain]: almostDomainShapeConfig,
-      index: providerTemplate.buildBarrelExportDomainRoot,
-    },
+    [p.betaDomain]: p.betaDomain
+      ? {
+          // Nest the beta
+          [p.betaDomain]: {
+            [p.gammaDomain]: almostDomainShapeConfig,
+            index: providerTemplate.buildBarrelExportDomainRoot,
+          },
+          index: providerTemplate.buildBarrelExportBetaDomainRoot,
+        }
+      : // Else, is domain
+        almostDomainShapeConfig,
     index: providerTemplate.buildBarrelExportBetaDomainRoot,
   };
 
   const domainShapeConfig: TDomainShapeConfigAlpha = {
-    [p.alphaDomain]: p.gammaDomain
-      ? wouldBeGammDomainConfig
-      : wouldBeBetaDomainConfig,
+    [p.alphaDomain]: wouldBeBetaDomainConfig,
   };
   const pathsToFileContent: TPathsToFileContentObj[] = [];
   function runner(
-    o:
-      | TDomainShapeConfig
-      | TDomainShapeConfigAlpha
-      | TDomainShapeConfigBeta
-      | TDomainShapeConfigGamma,
+    o: TDomainShapeConfig | TDomainShapeConfigAlpha | TDomainShapeConfigBeta,
     pp: string[]
   ): void {
     const keys = Object.keys(o);
