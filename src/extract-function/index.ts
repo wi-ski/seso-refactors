@@ -54,7 +54,8 @@ export const extractFunction = async (p: TScriptArgs) => {
   const filteredSymbolBundles = allSymbolBundles.filter((b) => {
     const keepSymbol =
       symbolFlagsWeKeep.includes(b.symbolFlags) &&
-      b.identifierNodeText !== "$r"; // Hack.
+      b.identifierNodeText !== "$r" &&
+      !b.identifierNode.getParentIfKind(SyntaxKind.PropertyAccessExpression);
     if (keepSymbol) {
       console.log(`Keeping symbol: ${b.identifierNodeText}`);
       console.log(b);

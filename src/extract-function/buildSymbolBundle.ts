@@ -1,6 +1,6 @@
 import { SymbolFlags } from "ts-morph";
 
-import type { Identifier } from "ts-morph";
+import type { Identifier, Node } from "ts-morph";
 
 type TSymbolNodeInfoBundle = {
   declarationSourceFilePath: string;
@@ -8,6 +8,7 @@ type TSymbolNodeInfoBundle = {
   definitionNodePosEnd: number;
   definitionNodePosStart: number;
   definitionNodeText: string;
+  identifierNode: Node;
   identifierNodeEnd: number;
   identifierNodeKind: string;
   identifierNodeLineText: string;
@@ -69,6 +70,7 @@ export const buildSymbolBundle = (
     definitionNodePosEnd,
     definitionNodePosStart,
     definitionNodeText,
+    identifierNode,
     identifierNodeEnd,
     identifierNodeKind,
     identifierNodeLineText,
