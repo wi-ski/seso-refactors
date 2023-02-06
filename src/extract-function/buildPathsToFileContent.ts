@@ -138,6 +138,8 @@ export function buildPathsToFileContent(p: {
     [p.alphaDomain]: wouldBeBetaDomainConfig,
     index: providerTemplate.buildBarrelExportAlphaDomainRoot,
   };
+
+  console.dir({ domainShapeConfig }, { depth: 10 });
   const pathsToFileContent: TPathsToFileContentObj[] = [];
   function runner(
     o: TDomainShapeConfig | TDomainShapeConfigAlpha | TDomainShapeConfigBeta,
