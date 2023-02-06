@@ -129,8 +129,7 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
 //   "BetaDomain.GammaDomain.application.useCase.providerName";
 // const providerIdentifierPath =
 //   "BetaDomain.GammaDomain.application.eventListener.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.infrastructure.service.providerName";
+const providerIdentifierPath = "FOOO.BAR.infrastructure.service.providerName";
 const split = providerIdentifierPath.split(".");
 const betaDomain = split[0];
 const gammaDomain = split.length > 4 ? split[1] : null;
