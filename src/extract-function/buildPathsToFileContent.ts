@@ -131,11 +131,12 @@ export function buildPathsToFileContent(p: {
         }
       : // Else, is domain
         almostDomainShapeConfig,
+    index: providerTemplate.buildBarrelExportBetaDomainRoot,
   };
 
   const domainShapeConfig: TDomainShapeConfigAlpha = {
     [p.alphaDomain]: wouldBeBetaDomainConfig,
-    index: providerTemplate.buildBarrelExportBetaDomainRoot,
+    index: providerTemplate.buildBarrelExportAlphaDomainRoot,
   };
   const pathsToFileContent: TPathsToFileContentObj[] = [];
   function runner(
