@@ -1,11 +1,10 @@
-import { SymbolFlags, SyntaxKind } from "ts-morph";
+import { Project, SymbolFlags, SyntaxKind } from "ts-morph";
 
 import { buildPathsToFileContent } from "./buildPathsToFileContent";
 import { buildSymbolBundle } from "./buildSymbolBundle";
 import { extractRefactorTypes } from "./constants";
 
 import type { TArgsContext, TTemplateParams } from "./constants";
-import type { Project } from "ts-morph";
 
 type TScriptArgs = {
   alphaDomain: string;
@@ -186,8 +185,8 @@ function buildArgsContext({
 // Testy
 // Testy
 // Testy
-// const providerIdentifierPath =
-//   "BetaDomain.GammaDomain.domain.service.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.domain.service.providerName";
 // const providerIdentifierPath =
 //   "BetaDomain.GammaDomain.domain.valueObject.providerName";
 // const providerIdentifierPath =
@@ -199,22 +198,16 @@ function buildArgsContext({
 // const providerIdentifierPath =
 //   "BetaDomain.GammaDomain.application.eventListener.providerName";
 
-// const project = new Project({
-//   tsConfigFilePath:
-//     "/Users/willdembinski/projects/seso-refactors/tsconfig.json",
-// });
-// extractFunction({
-//   cursorPos: 322,
-//   project,
-//   targetFilePath:
-//     "/Users/willdembinski/projects/seso-refactors/src/test/test-project/ddd/BetaDomain/application/service/testApplicationService.ts",
-//   writeFileConfigs: {
-//     alphaDomain: "ddd",
-//     betaDomain,
-//     gammaDomain,
-//     providerIdentifierPath,
-//     providerName: "providerName",
-//     pwd: "/Users/willdembinski/projects/seso-refactors/src/test/test-project",
-//     refactorType,
-//   },
-// });
+const project = new Project({
+  tsConfigFilePath:
+    "/Users/willdembinski/projects/seso-refactors/tsconfig.json",
+});
+extractFunction({
+  alphaDomain: "ddd",
+  cursorPosition: 357,
+  filePath:
+    "/Users/willdembinski/projects/seso-refactors/src/test/test-project/ddd/BetaDomain/application/service/testApplicationService.ts",
+  project,
+  providerIdentifierPath,
+  pwd: "/Users/willdembinski/projects/seso-refactors/src/test/test-project",
+});
