@@ -131,6 +131,9 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
 //   "BetaDomain.GammaDomain.application.eventListener.providerName";
 const providerIdentifierPath =
   "BetaDomain.GammaDomain.infrastructure.service.providerName";
+const split = providerIdentifierPath.split(".");
+const betaDomain = split[0];
+const gammaDomain = split.length > 4 ? split[1] : null;
 const refactorType = (() => {
   if (providerIdentifierPath.includes("domain.service")) {
     return extractRefactorTypes.DOMAIN_SERVICE;
@@ -162,8 +165,8 @@ extractFunction({
     "/Users/willdembinski/projects/seso-refactors/src/test/test-project/ddd/BetaDomain/application/service/testApplicationService.ts",
   writeFileConfigs: {
     alphaDomain: "ddd",
-    betaDomain: "BetaDomain",
-    gammaDomain: "GammaDomain",
+    betaDomain,
+    gammaDomain,
     providerIdentifierPath,
     providerName: "providerName",
     pwd: "/Users/willdembinski/projects/seso-refactors/src/test/test-project",
