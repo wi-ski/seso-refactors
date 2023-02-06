@@ -125,10 +125,10 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
 //   "BetaDomain.GammaDomain.domain.entity.providerName";
 // const providerIdentifierPath =
 //   "BetaDomain.GammaDomain.application.service.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.application.useCase.providerName";
 // const providerIdentifierPath =
-//   "BetaDomain.GammaDomain.application.eventListener.providerName";
+//   "BetaDomain.GammaDomain.application.useCase.providerName";
+const providerIdentifierPath =
+  "BetaDomain.GammaDomain.application.eventListener.providerName";
 // const providerIdentifierPath =
 //   "BetaDomain.GammaDomain.infrastructure.service.providerName";
 const refactorType = (() => {
