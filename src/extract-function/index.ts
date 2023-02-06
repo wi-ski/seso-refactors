@@ -99,7 +99,11 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
   ${targetDescendantVariableStatement.getText()}
   return ${targetDescendantIdentifierName};
 `;
-
+  console.log({
+    finalFnBody,
+    finalParamBlob,
+    finalParamBlobType,
+  });
   const templateParams: TTemplateParams = {
     TEMPLATE_FN_BODY: finalFnBody,
     TEMPLATE_PARAMS_BLOB: finalParamBlob,
