@@ -102,6 +102,7 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
       };
       return {
         ...o,
+        _content: o.content,
         content: o.content({
           sourcefileConfig,
           templateParams,
