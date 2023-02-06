@@ -7,15 +7,15 @@ export const buildBarrelExportDomainRoot: TSourceFileConfiguratorFn = (p) => {
   switch (p.writeFileConfigs.refactorType) {
     case extractRefactorTypes.APPLICATION_SERVICE:
     case extractRefactorTypes.APPLICATION_USECASE:
-      exportStatement = `export * as application from "./application"`;
+      exportStatement = `export * as application from "./application";`;
       break;
     case extractRefactorTypes.DOMAIN_ENTITY:
     case extractRefactorTypes.DOMAIN_SERVICE:
     case extractRefactorTypes.DOMAIN_VALUEOBJECT:
-      exportStatement = `export * as domain from "./domain"`;
+      exportStatement = `export * as domain from "./domain";`;
       break;
     case extractRefactorTypes.INFRASTRUCTURE_SERVICE:
-      exportStatement = `export * as infrastructure from "./infrastructure"`;
+      exportStatement = `export * as infrastructure from "./infrastructure";`;
       break;
     default:
       throw new Error("Bad refactor type.");
