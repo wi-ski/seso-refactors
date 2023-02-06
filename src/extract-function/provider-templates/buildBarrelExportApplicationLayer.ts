@@ -8,8 +8,10 @@ export const buildBarrelExportApplicationLayer: TSourceFileConfiguratorFn = (
   let exportStatement = "";
   switch (p.writeFileConfigs.refactorType) {
     case extractRefactorTypes.APPLICATION_SERVICE:
+      exportStatement = `export * as service from "./service";`;
+      break;
     case extractRefactorTypes.APPLICATION_USECASE:
-      exportStatement = `export * as application from "./application";`;
+      exportStatement = `export * as useCase from "./useCase";`;
       break;
     default:
       throw new Error("Bad refactor type.");
