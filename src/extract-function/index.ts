@@ -71,8 +71,8 @@ export const extractFunction = async (p: TScriptArgs) => {
   const symbolBundlesDeclaredOutsideIdentifier = filteredSymbolBundles.filter(
     (b) => {
       return !targetDescendantVariableStatement.containsRange(
-        b.declarationNodePosStart,
-        b.declarationNodePosEnd
+        b.definitionNodePosStart,
+        b.definitionNodePosEnd
       );
     }
   );

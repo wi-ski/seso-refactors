@@ -122,9 +122,9 @@ const moveDeclarationToDestinationAndUpdateReferences = ({
   if (definitions.length > 1) {
     throw new Error("Too many defintions found");
   }
-  const declarationNodeForDefintion = definitions[0].getDeclarationNode();
-  if (!declarationNodeForDefintion) {
-    throw new Error("Bad declarationNodeForDefintion");
+  const definitionNodeForDefintion = definitions[0].getdefinitionNode();
+  if (!definitionNodeForDefintion) {
+    throw new Error("Bad definitionNodeForDefintion");
   }
   const destinationRefactorSourceFile = project.getSourceFileOrThrow(
     destinationSourceFilePath
@@ -132,10 +132,10 @@ const moveDeclarationToDestinationAndUpdateReferences = ({
 
   console.log("Crawling the tree...");
   console.log("Looking for references to:");
-  console.log(declarationNodeForDefintion.getText());
+  console.log(definitionNodeForDefintion.getText());
   console.timeLog();
   const referenceNodes = languageService.findReferencesAsNodes(
-    declarationNodeForDefintion
+    definitionNodeForDefintion
   );
   referenceNodes.forEach((focusedNode) => {
     const focusedSourceFile = focusedNode.getSourceFile();
@@ -208,7 +208,7 @@ const moveDeclarationToDestinationAndUpdateReferences = ({
     }
   });
   const structure = {
-    ...declarationNodeForDefintion
+    ...definitionNodeForDefintion
       .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
       .getStructure(),
     isExported: true,
@@ -216,7 +216,7 @@ const moveDeclarationToDestinationAndUpdateReferences = ({
   };
   // Readme. For some reason - magical - we have to move/remove the declaration last.
   destinationRefactorSourceFile.addTypeAlias(structure);
-  declarationNodeForDefintion
+  definitionNodeForDefintion
     .asKindOrThrow(SyntaxKind.TypeAliasDeclaration)
     ?.remove();
 };

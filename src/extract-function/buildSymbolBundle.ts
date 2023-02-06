@@ -3,11 +3,11 @@ import { SymbolFlags } from "ts-morph";
 import type { Identifier } from "ts-morph";
 
 type TSymbolNodeInfoBundle = {
-  declarationNodeLineText: string;
-  declarationNodePosEnd: number;
-  declarationNodePosStart: number;
-  declarationNodeText: string;
   declarationSourceFilePath: string;
+  definitionNodeLineText: string;
+  definitionNodePosEnd: number;
+  definitionNodePosStart: number;
+  definitionNodeText: string;
   identifierNodeEnd: number;
   identifierNodeKind: string;
   identifierNodeLineText: string;
@@ -35,22 +35,26 @@ export const buildSymbolBundle = (
     .getSourceFile()
     .getText()
     .split("\n")[identifierNode.getEndLineNumber() - 1];
+
+  // defintion stuff
+  // defintion stuff
+  // defintion stuff
   // defintion stuff
   const LANGSERVICE = identifierNode.getProject().getLanguageService();
   const defintionNode = LANGSERVICE.getDefinitions(identifierNode)[0].getNode();
   const identifierSymbol = identifierNode.getSymbol();
   const identifierSymbolName = identifierSymbol.getName();
-  const declarationNode = defintionNode;
-  const declarationNodeText = declarationNode.getText();
-  const declarationNodePosStart = declarationNode.getStart();
-  const declarationNodePosEnd = declarationNode.getEnd();
-  const declarationSourceFilePath = declarationNode
+  const definitionNode = defintionNode;
+  const definitionNodeText = definitionNode.getText();
+  const definitionNodePosStart = definitionNode.getStart();
+  const definitionNodePosEnd = definitionNode.getEnd();
+  const declarationSourceFilePath = definitionNode
     .getSourceFile()
     .getFilePath();
-  const declarationNodeLineText = declarationNode
+  const definitionNodeLineText = definitionNode
     .getSourceFile()
     .getText()
-    .split("\n")[declarationNode.getEndLineNumber() - 1];
+    .split("\n")[definitionNode.getEndLineNumber() - 1];
   const symbolTypeAtLocation =
     identifierSymbol.getTypeAtLocation(identifierNode);
   const symbolTypeAtLocationText = symbolTypeAtLocation.getText();
@@ -60,11 +64,11 @@ export const buildSymbolBundle = (
   const symbbolTypeText = symbolType.getText();
 
   const bundle = {
-    declarationNodeLineText,
-    declarationNodePosEnd,
-    declarationNodePosStart,
-    declarationNodeText,
     declarationSourceFilePath,
+    definitionNodeLineText,
+    definitionNodePosEnd,
+    definitionNodePosStart,
+    definitionNodeText,
     identifierNodeEnd,
     identifierNodeKind,
     identifierNodeLineText,
