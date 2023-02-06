@@ -26,6 +26,46 @@ const yankPathsFromObj = <T extends Record<string, any>>(
 
   return res as T;
 };
+const extractRefactorTypesToYankPaths: Record<
+  TExtractRefactorTypes,
+  string[][]
+> = {
+  [extractRefactorTypes.APPLICATION_SERVICE]: [
+    ["index"],
+    ["application", "index"],
+    ["application", "service"],
+  ],
+  [extractRefactorTypes.APPLICATION_USECASE]: [
+    ["index"],
+    ["application", "index"],
+    ["application", "useCase"],
+  ],
+  [extractRefactorTypes.APPLICATION_EVENTLISTENER]: [
+    ["index"],
+    ["application", "index"],
+    ["application", "eventListener"],
+  ],
+  [extractRefactorTypes.DOMAIN_ENTITY]: [
+    ["index"],
+    ["domain", "index"],
+    ["domain", "entity"],
+  ],
+  [extractRefactorTypes.DOMAIN_SERVICE]: [
+    ["index"],
+    ["domain", "index"],
+    ["domain", "service"],
+  ],
+  [extractRefactorTypes.DOMAIN_VALUEOBJECT]: [
+    ["index"],
+    ["domain", "index"],
+    ["domain", "valueObject"],
+  ],
+  [extractRefactorTypes.INFRASTRUCTURE_SERVICE]: [
+    ["index"],
+    ["infrastructure", "index"],
+    ["infrastructure", "service"],
+  ],
+};
 export function buildPathsToFileContent(p: {
   alphaDomain: string;
   betaDomain: string;
@@ -34,46 +74,6 @@ export function buildPathsToFileContent(p: {
   pwd: string;
   refactorType: TExtractRefactorTypes;
 }): TPathsToFileContentObj[] {
-  const extractRefactorTypesToYankPaths: Record<
-    TExtractRefactorTypes,
-    string[][]
-  > = {
-    [extractRefactorTypes.APPLICATION_SERVICE]: [
-      ["index"],
-      ["application", "index"],
-      ["application", "service"],
-    ],
-    [extractRefactorTypes.APPLICATION_USECASE]: [
-      ["index"],
-      ["application", "index"],
-      ["application", "useCase"],
-    ],
-    [extractRefactorTypes.APPLICATION_EVENTLISTENER]: [
-      ["index"],
-      ["application", "index"],
-      ["application", "eventListener"],
-    ],
-    [extractRefactorTypes.DOMAIN_ENTITY]: [
-      ["index"],
-      ["domain", "index"],
-      ["domain", "entity"],
-    ],
-    [extractRefactorTypes.DOMAIN_SERVICE]: [
-      ["index"],
-      ["domain", "index"],
-      ["domain", "service"],
-    ],
-    [extractRefactorTypes.DOMAIN_VALUEOBJECT]: [
-      ["index"],
-      ["domain", "index"],
-      ["domain", "valueObject"],
-    ],
-    [extractRefactorTypes.INFRASTRUCTURE_SERVICE]: [
-      ["index"],
-      ["infrastructure", "index"],
-      ["infrastructure", "service"],
-    ],
-  };
   const _almostDomainShapeConfig: TDomainShapeConfig = {
     application: {
       eventListener: {
@@ -134,10 +134,6 @@ export function buildPathsToFileContent(p: {
     [p.alphaDomain]: betaDomainConfig,
   };
 
-  console.dir(
-    { _almostDomainShapeConfig, alphaDomainShapeConfig },
-    { depth: 10 }
-  );
   const pathsToFileContent: TPathsToFileContentObj[] = [];
   function runner(
     o: TDomainShapeConfig | TDomainShapeConfigAlpha | TDomainShapeConfigBeta,
