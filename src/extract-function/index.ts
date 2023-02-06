@@ -118,18 +118,18 @@ ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
 // Testy
 const providerIdentifierPath =
   "BetaDomain.GammaDomain.domain.service.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.domain.valueObject.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.domain.entity.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.application.service.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.application.useCase.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.application.eventListener.providerName";
-const providerIdentifierPath =
-  "BetaDomain.GammaDomain.infrastructure.service.providerName";
+// const providerIdentifierPath =
+//   "BetaDomain.GammaDomain.domain.valueObject.providerName";
+// const providerIdentifierPath =
+//   "BetaDomain.GammaDomain.domain.entity.providerName";
+// const providerIdentifierPath =
+//   "BetaDomain.GammaDomain.application.service.providerName";
+// const providerIdentifierPath =
+//   "BetaDomain.GammaDomain.application.useCase.providerName";
+// const providerIdentifierPath =
+//   "BetaDomain.GammaDomain.application.eventListener.providerName";
+// const providerIdentifierPath =
+//   "BetaDomain.GammaDomain.infrastructure.service.providerName";
 const refactorType = (() => {
   if (providerIdentifierPath.includes("domain.service")) {
     return extractRefactorTypes.DOMAIN_SERVICE;
