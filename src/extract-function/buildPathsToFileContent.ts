@@ -131,7 +131,6 @@ export function buildPathsToFileContent(p: {
         }
       : // Else, is domain
         almostDomainShapeConfig,
-    index: providerTemplate.buildBarrelExportBetaDomainRoot,
   };
 
   const domainShapeConfig: TDomainShapeConfigAlpha = {

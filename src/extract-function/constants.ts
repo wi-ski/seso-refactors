@@ -31,7 +31,6 @@ export type TDomainShapeConfigBeta = {
     | TDomainShapeConfig
     | TDomainShapeConfigGamma
     | TSourceFileConfiguratorFn;
-  index: TSourceFileConfiguratorFn;
 };
 
 export type TDomainShapeConfigGamma = {
