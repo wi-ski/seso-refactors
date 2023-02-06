@@ -86,6 +86,7 @@ export const extractFunction = async (p: TScriptArgs) => {
 ${symbolBundlesDeclaredOutsideIdentifier.reduce((acc, next) => {
   switch (next.symbolFlags) {
     case SymbolFlags.BlockScopedVariable:
+    case SymbolFlags.Property:
       return `${acc}${next.identifierSymbolName}: ${next.symbolTypeAtLocationText},`;
     default:
       console.log(
