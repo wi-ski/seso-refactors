@@ -3,6 +3,7 @@ export * from "./buildBarrelExportApplicationLayer";
 export * from "./buildBarrelExportBetaDomainRoot";
 export * from "./buildBarrelExportDomainLayer";
 export * from "./buildBarrelExportDomainRoot";
+export * from "./buildBarrelExportGammaDomainRoot";
 export * from "./buildBarrelExportInfrastructureLayer";
 export * from "./buildBarrelExportProvider";
 export * from "./buildProviderApplicationEventListener";
