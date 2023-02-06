@@ -46,7 +46,7 @@ export function buildPathsToFileContent(p: {
     [extractRefactorTypes.APPLICATION_USECASE]: [
       ["index"],
       ["application", "index"],
-      ["application", "usecase"],
+      ["application", "useCase"],
     ],
     [extractRefactorTypes.APPLICATION_EVENTLISTENER]: [
       ["index"],
@@ -66,7 +66,7 @@ export function buildPathsToFileContent(p: {
     [extractRefactorTypes.DOMAIN_VALUEOBJECT]: [
       ["index"],
       ["domain", "index"],
-      ["domain", "valueobject"],
+      ["domain", "valueObject"],
     ],
     [extractRefactorTypes.INFRASTRUCTURE_SERVICE]: [
       ["index"],
@@ -134,7 +134,10 @@ export function buildPathsToFileContent(p: {
     [p.alphaDomain]: betaDomainConfig,
   };
 
-  console.dir({ alphaDomainShapeConfig }, { depth: 10 });
+  console.dir(
+    { _almostDomainShapeConfig, alphaDomainShapeConfig },
+    { depth: 10 }
+  );
   const pathsToFileContent: TPathsToFileContentObj[] = [];
   function runner(
     o: TDomainShapeConfig | TDomainShapeConfigAlpha | TDomainShapeConfigBeta,
