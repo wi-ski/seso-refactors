@@ -136,7 +136,6 @@ export function buildPathsToFileContent(p: {
   };
 
   console.dir({ domainShapeConfig }, { depth: 10 });
-  throw new Error("");
   const pathsToFileContent: TPathsToFileContentObj[] = [];
   function runner(
     o: TDomainShapeConfig | TDomainShapeConfigAlpha | TDomainShapeConfigBeta,
@@ -157,6 +156,6 @@ export function buildPathsToFileContent(p: {
       });
     }
   }
-  // runner(domainShapeConfig, []);
-  // return pathsToFileContent;
+  runner(domainShapeConfig, []);
+  return pathsToFileContent;
 }
