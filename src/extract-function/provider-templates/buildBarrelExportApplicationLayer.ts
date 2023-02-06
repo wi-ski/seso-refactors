@@ -13,6 +13,9 @@ export const buildBarrelExportApplicationLayer: TSourceFileConfiguratorFn = (
     case extractRefactorTypes.APPLICATION_USECASE:
       exportStatement = `export * as useCase from "./useCase";`;
       break;
+    case extractRefactorTypes.APPLICATION_EVENTLISTENER:
+      exportStatement = `export * as eventListener from "./eventListener";`;
+      break;
     default:
       throw new Error("Bad refactor type.");
   }

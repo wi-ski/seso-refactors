@@ -6,6 +6,7 @@ export const buildBarrelExportDomainRoot: TSourceFileConfiguratorFn = (p) => {
   let exportStatement = "";
   switch (p.writeFileConfigs.refactorType) {
     case extractRefactorTypes.APPLICATION_SERVICE:
+    case extractRefactorTypes.APPLICATION_EVENTLISTENER:
     case extractRefactorTypes.APPLICATION_USECASE:
       exportStatement = `export * as application from "./application";`;
       break;
