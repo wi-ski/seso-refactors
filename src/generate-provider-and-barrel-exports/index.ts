@@ -25,6 +25,8 @@ const yankPathsFromObj = <T extends Record<string, any>>(
   o: T
 ): T => {
   let res = {};
+  console.log("yankPathsFromObj");
+  console.log(ps);
   ps.forEach((p) => {
     const valAtPath = R.path(p, o);
     res = R.assocPath(p, valAtPath, res);
@@ -94,55 +96,67 @@ const buildBaseArgsOrThrow =
     const cwf = activeTextEditor.document.fileName;
     const cursorPosition = document.offsetAt(selectionStart);
 
-    return {
+    const res = {
       cursorPosition,
       cwf,
       focusedFilePath,
       pwd: workspaceFolders[0].uri.path,
       refactorType,
-      vsCodeRef: vscodeLibRef,
     };
+    console.log("buildBaseArgsOrThrow");
+    console.log(res);
+    return res;
   };
 
 async function promptUserWithSuggestedIdentifier(p: TBaseArgsContext) {
   const betaAndGammaDomainStr = (() => {
     const p1 = String(p.cwf.split("ddd").pop());
     if (p1.includes("/application/")) {
-      return p1.split("/application/").shift().split("/").join("."); // looks like: Shared/Media
+      return p1
+        .split("/application/")
+        .shift()
+        .split("/")
+        .filter(Boolean)
+        .join("."); // looks like: Shared/Media
     }
     if (p1.includes("/domain/")) {
-      return p1.split("/domain/").shift().split("/").join("."); // looks like: Shared/Media
+      return p1.split("/domain/").shift().split("/").filter(Boolean).join("."); // looks like: Shared/Media
     }
     if (p1.includes("/infrastructure/")) {
-      return p1.split("/infrastructure/").shift().split("/").join("."); // looks like: Shared/Media
+      return p1
+        .split("/infrastructure/")
+        .shift()
+        .split("/")
+        .filter(Boolean)
+        .join("."); // looks like: Shared/Media
     }
   })();
 
   let placeholder = "";
   switch (p.refactorType) {
     case constants.generateableProviderTypes.APPLICATION_EVENTLISTENER:
-      placeholder = `$r${betaAndGammaDomainStr}.application.eventListener.`;
+      placeholder = `${betaAndGammaDomainStr}.application.eventListener.`;
       break;
     case constants.generateableProviderTypes.APPLICATION_USECASE:
-      placeholder = `$r${betaAndGammaDomainStr}.application.useCase.`;
+      placeholder = `${betaAndGammaDomainStr}.application.useCase.`;
       break;
     case constants.generateableProviderTypes.APPLICATION_SERVICE:
-      placeholder = `$r${betaAndGammaDomainStr}.application.service.`;
+      placeholder = `${betaAndGammaDomainStr}.application.service.`;
       break;
     case constants.generateableProviderTypes.APPLICATION_DTO:
-      placeholder = `$r${betaAndGammaDomainStr}.application.dto.`;
+      placeholder = `${betaAndGammaDomainStr}.application.dto.`;
       break;
     case constants.generateableProviderTypes.DOMAIN_ENTITY:
-      placeholder = `$r${betaAndGammaDomainStr}.domain.entity.`;
+      placeholder = `${betaAndGammaDomainStr}.domain.entity.`;
       break;
     case constants.generateableProviderTypes.DOMAIN_SERVICE:
-      placeholder = `$r${betaAndGammaDomainStr}.domain.service.`;
+      placeholder = `${betaAndGammaDomainStr}.domain.service.`;
       break;
     case constants.generateableProviderTypes.DOMAIN_VALUEOBJECT:
-      placeholder = `$r${betaAndGammaDomainStr}.domain.valueObject.`;
+      placeholder = `${betaAndGammaDomainStr}.domain.valueObject.`;
       break;
     case constants.generateableProviderTypes.INFRASTRUCTURE_SERVICE:
-      placeholder = `$r${betaAndGammaDomainStr}.infrastructure.service.`;
+      placeholder = `${betaAndGammaDomainStr}.infrastructure.service.`;
       break;
     default:
       throw new Error("Bad Generator Type.");
@@ -154,6 +168,7 @@ async function promptUserWithSuggestedIdentifier(p: TBaseArgsContext) {
     title: "The $r path",
     value: placeholder,
   })) as string;
+
   if (!proposedTypeReferenceChain) {
     throw new Error("Bad type reference chain");
   }
@@ -163,7 +178,7 @@ async function promptUserWithSuggestedIdentifier(p: TBaseArgsContext) {
   const betaDomain = split[0];
   const gammaDomain = split.length > 4 ? split[1] : null;
 
-  return {
+  const res = {
     ...p,
     alphaDomain,
     betaDomain,
@@ -171,11 +186,16 @@ async function promptUserWithSuggestedIdentifier(p: TBaseArgsContext) {
     placeholder,
     providerName,
   };
+  return res;
 }
 
 function buildPathsToFileContent(p: TFinaArgsContext) {
   const _almostDomainShapeConfig: TDomainShapeConfig = {
     application: {
+      dto: {
+        index: providerTemplate.buildBarrelExportProvider,
+        [p.providerName]: providerTemplate.buildProviderApplicationDTO,
+      },
       eventListener: {
         index: providerTemplate.buildBarrelExportProvider,
         [p.providerName]:
@@ -274,9 +294,11 @@ const generateDomainService = async (_a: TFinaArgsContext) => {};
 const generateDomainValueobject = async (_a: TFinaArgsContext) => {};
 const generateInfrastructureService = async (_a: TFinaArgsContext) => {};
 const generateApplicationDto = async (_a: TFinaArgsContext) => {
+  console.log("generateApplicationDto");
+  console.log(_a);
   const finalArgs = buildPathsToFileContent(_a);
-  console.dir(finalArgs);
-  throw new Error("");
+  console.log("finalArgs");
+  console.log(finalArgs);
 };
 
 type TMaybePromise<T> = Promise<T> | T;
@@ -286,7 +308,11 @@ function asyncPipe<A, B, C, D>(
   ab: (a: A) => TMaybePromise<B>
 ): (a: TMaybePromise<A>) => Promise<D>;
 function asyncPipe(...fns: ((...a: any[]) => Promise<any>)[]) {
-  return (x: any) => fns.reduce(async (y, fn) => fn(await y), x);
+  return (x: any) =>
+    fns
+      .slice()
+      .reverse() // Note: Reverse mutates the array. Boo.
+      .reduce(async (y, fn) => fn(await y), x);
 }
 export const commandNamesToHandlers: TCommandNamesToHandlers = {
   [constants.generateableProviderTypes.APPLICATION_EVENTLISTENER]: asyncPipe(

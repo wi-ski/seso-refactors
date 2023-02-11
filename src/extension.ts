@@ -10,9 +10,14 @@ const bundles = Object.entries(
 );
 
 export async function activate(context: vscode.ExtensionContext) {
-  bundles.forEach(([refactorName, refactorHandler]) => {
+  console.log("Activating...");
+  console.log(bundles);
+  bundles.map(([refactorName, refactorHandler]) => {
+    const command = [PREFIX, refactorName].join(".");
+    console.log("Registering...");
+    console.log(command);
     const disposable = vscode.commands.registerCommand(
-      [PREFIX, refactorName].join("."), // Looks like: `seso-refactors.generateFoo`
+      command, // Looks like: `seso-refactors.generateFoo`
       () => refactorHandler(vscode)
     );
     context.subscriptions.push(disposable);

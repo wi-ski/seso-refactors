@@ -16,8 +16,36 @@
   "contributes": {
     "commands": [
       {
-        "command": "seso-refactors.helloWorld",
-        "title": "Hello World"
+        "command": "seso-refactors.APPLICATION_DTO",
+        "title": "Generate Seso Application dto..."
+      },
+      {
+        "command": "seso-refactors.APPLICATION_EVENTLISTENER",
+        "title": "Generate Seso Application eventlistener..."
+      },
+      {
+        "command": "seso-refactors.APPLICATION_SERVICE",
+        "title": "Generate Seso Application service..."
+      },
+      {
+        "command": "seso-refactors.APPLICATION_USECASE",
+        "title": "Generate Seso Application usecase..."
+      },
+      {
+        "command": "seso-refactors.DOMAIN_ENTITY",
+        "title": "Generate Seso Domain entity..."
+      },
+      {
+        "command": "seso-refactors.DOMAIN_SERVICE",
+        "title": "Generate Seso Domain service..."
+      },
+      {
+        "command": "seso-refactors.DOMAIN_VALUEOBJECT",
+        "title": "Generate Seso Domain valueobject..."
+      },
+      {
+        "command": "seso-refactors.INFRASTRUCTURE_SERVICE",
+        "title": "Generate Seso Infrastructure service..."
       }
     ]
   },

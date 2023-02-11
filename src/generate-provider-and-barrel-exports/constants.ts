@@ -9,6 +9,7 @@ export type TCommandNamesToHandlers = Record<
 
 export type TDomainShapeConfig = {
   application: {
+    dto: TSourceFileConfiguratorObj;
     eventListener: TSourceFileConfiguratorObj;
     index: TSourceFileConfiguratorFn;
     service: TSourceFileConfiguratorObj;
