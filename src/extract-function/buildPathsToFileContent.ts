@@ -67,6 +67,7 @@ const extractRefactorTypesToYankPaths: Record<
     ["infrastructure", "service"],
   ],
 };
+
 export function buildPathsToFileContent(
   p: TArgsContext
 ): TPathsToFileContentObj[] {

@@ -6,9 +6,9 @@ import * as vscode from "vscode";
 import {
   buildArgsFromDomainTypePath,
   buildDestinationDomainPathSuggested,
-} from "./helpers";
+} from "../helpers";
 
-import type { TExtensionParamsBlob } from "./helpers";
+import type { TExtensionParamsBlob } from "../helpers";
 import type {
   // FormatCodeSettings,
   LanguageService,
