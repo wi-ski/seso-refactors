@@ -1,5 +1,6 @@
 {
   "name": "seso-refactors",
+  "repository": "git@github.com:wi-ski/seso-refactors.git",
   "displayName": "seso-refactors",
   "description": "Seso-App refactors",
   "version": "0.0.1",
