@@ -3,13 +3,14 @@ import type { TSourceFileConfiguratorFn } from "../constants";
 export const buildBarrelExportInfrastructureLayer: TSourceFileConfiguratorFn = (
   p
 ) => {
-  // const exportStatement = `export * as service from "./service";`;
-  // const statements = p.sourcefileContext.sourceFile.getStatements();
-  // const containsExportAlready = statements.some(
-  //   (s) => s.getText() === exportStatement
-  // );
-  // if (containsExportAlready) {
-  //   return;
-  // }
-  // p.sourcefileContext.sourceFile.addStatements(exportStatement);
+  const {
+    sourcefileContext: { fileContent, isFreshFile },
+  } = p;
+  const exportStatement = `export * as service from "./service";`;
+  const statements = p.sourcefileContext.fileContent.split("\n");
+  const containsExportAlready = statements.some((s) => s === exportStatement);
+  const newFileContent = [...statements, exportStatement].join("\n");
+  if (containsExportAlready) return fileContent;
+  if (isFreshFile) return exportStatement;
+  return newFileContent;
 };

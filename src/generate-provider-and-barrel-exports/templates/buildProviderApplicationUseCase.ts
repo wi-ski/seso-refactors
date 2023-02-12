@@ -17,4 +17,6 @@ export const ${"TEMPLATE_PROVIDER_NAME"}: TSeso.TDDD.application.TApplicationUse
 `;
 export const buildProviderApplicationUseCase: TSourceFileConfiguratorFn = (
   p
-) => {};
+) => {
+  return filler(p);
+};

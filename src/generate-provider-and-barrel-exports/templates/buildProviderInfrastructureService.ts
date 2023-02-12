@@ -17,4 +17,6 @@ export const ${"TEMPLATE_PROVIDER_NAME"}: TSeso.TDDD.infrastructure.TInfrastruct
 `;
 export const buildProviderInfrastructureService: TSourceFileConfiguratorFn = (
   p
-) => {};
+) => {
+  return filler(p.templateParams);
+};

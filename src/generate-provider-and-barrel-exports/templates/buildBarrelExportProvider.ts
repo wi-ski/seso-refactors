@@ -1,15 +1,14 @@
 import type { TSourceFileConfiguratorFn } from "../constants";
 
 export const buildBarrelExportProvider: TSourceFileConfiguratorFn = (p) => {
-  // const exportStatement = `export * from "./${p.argsContext.providerName}";`;
-  // const statements = p.sourcefileContext.sourceFile.getStatements();
-  // const containsExportAlready = statements.some(
-  //   (s) => s.getText() === exportStatement
-  // );
-  // if (containsExportAlready) {
-  //   return console.log(
-  //     `Skipping exiting import (${exportStatement}) for SourceFile: ${p.sourcefileContext.sourceFile.getFilePath()}`
-  //   );
-  // }
-  // p.sourcefileContext.sourceFile.addStatements(exportStatement);
+  const {
+    sourcefileContext: { fileContent, isFreshFile },
+  } = p;
+  const exportStatement = `export * from "./${p.argsContext.providerName}";`;
+  const statements = p.sourcefileContext.fileContent.split("\n");
+  const containsExportAlready = statements.some((s) => s === exportStatement);
+  const newFileContent = [...statements, exportStatement].join("\n");
+  if (containsExportAlready) return fileContent;
+  if (isFreshFile) return exportStatement;
+  return newFileContent;
 };

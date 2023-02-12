@@ -6,9 +6,9 @@ import * as vscode from "vscode";
 import {
   buildArgsFromDomainTypePath,
   buildDestinationDomainPathSuggested,
-} from "../helpers";
+} from "../../helpers";
 
-import type { TExtensionParamsBlob } from "../helpers";
+import type { TExtensionParamsBlob } from "../../helpers";
 import type {
   // FormatCodeSettings,
   LanguageService,
@@ -351,15 +351,7 @@ export async function activate(context: vscode.ExtensionContext) {
     "seso-refactors.helloWorld",
     async () => {
       console.time();
-      // return vscode.window.withProgress(
-      //   {
-      //     location: vscode.ProgressLocation.Notification,
-      //     title: "Doing Stuff...",
-      //   },
-      //   async (progress) => {
-      //             progress.report(`${++done}/${total}`);
-      //   }
-      // );
+
       try {
         taskLock = 1;
         await clearJobTaskQueueAndReset();

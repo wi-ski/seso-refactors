@@ -15,4 +15,6 @@ export const ${"TEMPLATE_PROVIDER_NAME"}: TSeso.TDDD.domain.TDomainEntity<${"TEM
   ${"TEMPLATE_FN_BODY"}
 };
 `;
-export const buildProviderDomainEntity: TSourceFileConfiguratorFn = (p) => {};
+export const buildProviderDomainEntity: TSourceFileConfiguratorFn = (p) => {
+  return filler(p.templateParams);
+};

@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as path from "path";
 
+import * as fse from "fs-extra";
 import * as R from "ramda";
 import * as vscode from "vscode";
 
@@ -20,13 +21,11 @@ import type {
 
 type TVSCode = typeof vscode;
 
-const yankPathsFromObj = <T extends Record<string, any>>(
+const yankPathsFromObj = <T extends Record<string, unknown>>(
   ps: string[][],
   o: T
 ): T => {
   let res = {};
-  console.log("yankPathsFromObj");
-  console.log(ps);
   ps.forEach((p) => {
     const valAtPath = R.path(p, o);
     res = R.assocPath(p, valAtPath, res);
@@ -103,8 +102,6 @@ const buildBaseArgsOrThrow =
       pwd: workspaceFolders[0].uri.path,
       refactorType,
     };
-    console.log("buildBaseArgsOrThrow");
-    console.log(res);
     return res;
   };
 
@@ -169,8 +166,11 @@ async function promptUserWithSuggestedIdentifier(p: TBaseArgsContext) {
     value: placeholder,
   })) as string;
 
+  console.log("proposedTypeReferenceChain");
+  console.log(proposedTypeReferenceChain);
+
   if (!proposedTypeReferenceChain) {
-    throw new Error("Bad type reference chain");
+    throw new Error("Generator command aborted.");
   }
   const split = proposedTypeReferenceChain.split(".");
   const providerName = String(proposedTypeReferenceChain.split(".").pop());
@@ -267,7 +267,7 @@ function buildPathsToFileContent(p: TFinaArgsContext) {
         const attr = o[k];
         if (typeof attr === "function") {
           pathsToFileContent.push({
-            content: attr,
+            content: attr, // Is content builder.
             path: path.join(p.pwd, ...pp, `${k}.ts`),
           });
         } else {
@@ -279,13 +279,13 @@ function buildPathsToFileContent(p: TFinaArgsContext) {
   runner(alphaDomainShapeConfig, []);
   return { ...p, pathsToFileContent };
 }
-type TBaseArgsContext = Awaited<
+
+export type TBaseArgsContext = Awaited<
   ReturnType<ReturnType<typeof buildBaseArgsOrThrow>>
 >;
-type TFinaArgsContext = Awaited<
+export type TFinaArgsContext = Awaited<
   ReturnType<typeof promptUserWithSuggestedIdentifier>
 >;
-
 const generateApplicationEventlistener = async (_a: TFinaArgsContext) => {};
 const generateApplicationService = async (_a: TFinaArgsContext) => {};
 const generateApplicationUsecase = async (_a: TFinaArgsContext) => {};
@@ -293,74 +293,202 @@ const generateDomainEntity = async (_a: TFinaArgsContext) => {};
 const generateDomainService = async (_a: TFinaArgsContext) => {};
 const generateDomainValueobject = async (_a: TFinaArgsContext) => {};
 const generateInfrastructureService = async (_a: TFinaArgsContext) => {};
-const generateApplicationDto = async (_a: TFinaArgsContext) => {
-  console.log("generateApplicationDto");
-  console.log(_a);
-  const finalArgs = buildPathsToFileContent(_a);
-  console.log("finalArgs");
-  console.log(finalArgs);
+const generateApplicationDto = async (argsContext: TFinaArgsContext) => {
+  const { pathsToFileContent } = buildPathsToFileContent(argsContext);
+  for (let index = 0; index < pathsToFileContent.length; index++) {
+    const p = pathsToFileContent[index];
+    console.log("Starting writes...");
+    const isFreshFile = !(await fse.exists(p.path));
+    const fileContent = isFreshFile
+      ? ""
+      : await fse.readFile(p.path, { encoding: "utf8" });
+    const configuratorFnOpts = {
+      argsContext,
+      sourcefileContext: {
+        fileContent,
+        filePath: p.path,
+        fs: fse,
+        isFreshFile,
+      },
+      templateParams: {
+        TEMPLATE_FN_BODY: "",
+        TEMPLATE_PARAMS_BLOB: "",
+        TEMPLATE_PARAMS_TYPE: "",
+        TEMPLATE_PARAMS_TYPE_NAME: "",
+        TEMPLATE_PROVIDER_NAME: argsContext.providerName,
+        TEMPLATE_RESPONSE_TYPE: "",
+        TEMPLATE_RESPONSE_TYPE_NAME: "",
+      },
+    };
+
+    console.log("Ensuring file...");
+    console.log(p.path);
+    await fse.ensureFile(p.path);
+    await fse.writeFile(p.path, p.content(configuratorFnOpts));
+  }
 };
 
 type TMaybePromise<T> = Promise<T> | T;
 function asyncPipe<A, B, C, D>(
+  // Note: is reverse order.
   cd: (b: C) => TMaybePromise<D>,
   bc: (b: B) => TMaybePromise<C>,
   ab: (a: A) => TMaybePromise<B>
 ): (a: TMaybePromise<A>) => Promise<D>;
-function asyncPipe(...fns: ((...a: any[]) => Promise<any>)[]) {
-  return (x: any) =>
+function asyncPipe(...fns: ((...a: unknown[]) => Promise<unknown>)[]) {
+  return (x: unknown) =>
     fns
       .slice()
       .reverse() // Note: Reverse mutates the array. Boo.
       .reduce(async (y, fn) => fn(await y), x);
 }
+
+const progressFeedbackWrapper = <T extends (fn: any) => Promise<any>>(
+  fn: T,
+  feedbackMsg: string
+): T => {
+  const customCancellationToken = new vscode.CancellationTokenSource();
+  customCancellationToken.token.onCancellationRequested(() => {
+    customCancellationToken.dispose();
+  });
+  return async function progressWrapper(ps) {
+    return vscode.window.withProgress(
+      {
+        cancellable: true,
+        location: vscode.ProgressLocation.Notification,
+        title: "Seso DDD Generator",
+      },
+      async (progress) => {
+        progress.report({ message: feedbackMsg });
+        const result = await fn(ps);
+        progress.report({ message: `${feedbackMsg} [Complete]` });
+        return result;
+      }
+    );
+  } as T;
+};
+
 export const commandNamesToHandlers: TCommandNamesToHandlers = {
   [constants.generateableProviderTypes.APPLICATION_EVENTLISTENER]: asyncPipe(
-    generateApplicationEventlistener,
-    promptUserWithSuggestedIdentifier,
-    buildBaseArgsOrThrow(
-      constants.generateableProviderTypes.APPLICATION_EVENTLISTENER
+    progressFeedbackWrapper(
+      generateApplicationEventlistener,
+      "Generating files and barrel exports..."
+    ),
+    progressFeedbackWrapper(
+      promptUserWithSuggestedIdentifier,
+      "Prompting for provider identifier..."
+    ),
+    progressFeedbackWrapper(
+      buildBaseArgsOrThrow(
+        constants.generateableProviderTypes.APPLICATION_EVENTLISTENER
+      ),
+      "Building base arguments context..."
     )
   ),
   [constants.generateableProviderTypes.APPLICATION_SERVICE]: asyncPipe(
-    generateApplicationService,
-    promptUserWithSuggestedIdentifier,
-    buildBaseArgsOrThrow(
-      constants.generateableProviderTypes.APPLICATION_SERVICE
+    progressFeedbackWrapper(
+      generateApplicationService,
+      "Generating files and barrel exports..."
+    ),
+    progressFeedbackWrapper(
+      promptUserWithSuggestedIdentifier,
+      "Prompting for provider identifier..."
+    ),
+    progressFeedbackWrapper(
+      buildBaseArgsOrThrow(
+        constants.generateableProviderTypes.APPLICATION_SERVICE
+      ),
+      "Building base arguments context..."
     )
   ),
   [constants.generateableProviderTypes.APPLICATION_USECASE]: asyncPipe(
-    generateApplicationUsecase,
-    promptUserWithSuggestedIdentifier,
-    buildBaseArgsOrThrow(
-      constants.generateableProviderTypes.APPLICATION_USECASE
+    progressFeedbackWrapper(
+      generateApplicationUsecase,
+      "Generating files and barrel exports..."
+    ),
+    progressFeedbackWrapper(
+      promptUserWithSuggestedIdentifier,
+      "Prompting for provider identifier..."
+    ),
+    progressFeedbackWrapper(
+      buildBaseArgsOrThrow(
+        constants.generateableProviderTypes.APPLICATION_USECASE
+      ),
+      "Building base arguments context..."
     )
   ),
   [constants.generateableProviderTypes.APPLICATION_DTO]: asyncPipe(
-    generateApplicationDto,
-    promptUserWithSuggestedIdentifier,
-    buildBaseArgsOrThrow(constants.generateableProviderTypes.APPLICATION_DTO)
+    progressFeedbackWrapper(
+      generateApplicationDto,
+      "Generating files and barrel exports..."
+    ),
+    progressFeedbackWrapper(
+      promptUserWithSuggestedIdentifier,
+      "Prompting for provider identifier..."
+    ),
+    progressFeedbackWrapper(
+      buildBaseArgsOrThrow(constants.generateableProviderTypes.APPLICATION_DTO),
+      "Building base arguments context..."
+    )
   ),
   [constants.generateableProviderTypes.DOMAIN_ENTITY]: asyncPipe(
-    generateDomainEntity,
-    promptUserWithSuggestedIdentifier,
-    buildBaseArgsOrThrow(constants.generateableProviderTypes.DOMAIN_ENTITY)
+    progressFeedbackWrapper(
+      generateDomainEntity,
+      "Generating files and barrel exports..."
+    ),
+    progressFeedbackWrapper(
+      promptUserWithSuggestedIdentifier,
+      "Prompting for provider identifier..."
+    ),
+    progressFeedbackWrapper(
+      buildBaseArgsOrThrow(constants.generateableProviderTypes.DOMAIN_ENTITY),
+      "Building base arguments context..."
+    )
   ),
   [constants.generateableProviderTypes.DOMAIN_SERVICE]: asyncPipe(
-    generateDomainService,
-    promptUserWithSuggestedIdentifier,
-    buildBaseArgsOrThrow(constants.generateableProviderTypes.DOMAIN_SERVICE)
+    progressFeedbackWrapper(
+      generateDomainService,
+      "Generating files and barrel exports..."
+    ),
+    progressFeedbackWrapper(
+      promptUserWithSuggestedIdentifier,
+      "Prompting for provider identifier..."
+    ),
+    progressFeedbackWrapper(
+      buildBaseArgsOrThrow(constants.generateableProviderTypes.DOMAIN_SERVICE),
+      "Building base arguments context..."
+    )
   ),
   [constants.generateableProviderTypes.DOMAIN_VALUEOBJECT]: asyncPipe(
-    generateDomainValueobject,
-    promptUserWithSuggestedIdentifier,
-    buildBaseArgsOrThrow(constants.generateableProviderTypes.DOMAIN_VALUEOBJECT)
+    progressFeedbackWrapper(
+      generateDomainValueobject,
+      "Generating files and barrel exports..."
+    ),
+    progressFeedbackWrapper(
+      promptUserWithSuggestedIdentifier,
+      "Prompting for provider identifier..."
+    ),
+    progressFeedbackWrapper(
+      buildBaseArgsOrThrow(
+        constants.generateableProviderTypes.DOMAIN_VALUEOBJECT
+      ),
+      "Building base arguments context..."
+    )
   ),
   [constants.generateableProviderTypes.INFRASTRUCTURE_SERVICE]: asyncPipe(
-    generateInfrastructureService,
-    promptUserWithSuggestedIdentifier,
-    buildBaseArgsOrThrow(
-      constants.generateableProviderTypes.INFRASTRUCTURE_SERVICE
+    progressFeedbackWrapper(
+      generateInfrastructureService,
+      "Generating files and barrel exports..."
+    ),
+    progressFeedbackWrapper(
+      promptUserWithSuggestedIdentifier,
+      "Prompting for provider identifier..."
+    ),
+    progressFeedbackWrapper(
+      buildBaseArgsOrThrow(
+        constants.generateableProviderTypes.INFRASTRUCTURE_SERVICE
+      ),
+      "Building base arguments context..."
     )
   ),
 };

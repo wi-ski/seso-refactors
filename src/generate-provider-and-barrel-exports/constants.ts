@@ -1,4 +1,5 @@
-import type * as fs from "fs";
+import type { TFinaArgsContext } from ".";
+import type * as fs from "fs-extra";
 
 type TFS = typeof fs;
 
@@ -51,12 +52,14 @@ export type TPathsToFileContentObj = {
   content: TSourceFileConfiguratorFn;
   path: string;
 };
-
-export type TSourceFileConfiguratorFn = (config: {
-  argsContext: any;
+export type TSourceFileConfiguratorFn = (
+  p: TSourceFileConfiguratorFnOpts
+) => string;
+export type TSourceFileConfiguratorFnOpts = {
+  argsContext: TFinaArgsContext;
   sourcefileContext: TSourceFileContext;
   templateParams: TTemplateParams;
-}) => void;
+};
 
 export type TSourceFileConfiguratorObj = Record<
   string,

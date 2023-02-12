@@ -17,4 +17,6 @@ export const ${"TEMPLATE_PROVIDER_NAME"}: TSeso.TDDD.application.TApplicationEve
 `;
 
 export const buildProviderApplicationEventListener: TSourceFileConfiguratorFn =
-  (p) => {};
+  (p) => {
+    return filler(p.templateParams);
+  };

@@ -17,4 +17,6 @@ export const ${"TEMPLATE_PROVIDER_NAME"}: TSeso.TDDD.application.TApplicationSer
 `;
 export const buildProviderApplicationService: TSourceFileConfiguratorFn = (
   p
-) => {};
+) => {
+  return filler(p.templateParams);
+};
